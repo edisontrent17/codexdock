@@ -83,6 +83,20 @@ func TestResolveMatchesHostAndDNSAliasesCaseInsensitively(t *testing.T) {
 	require.Equal(t, "100.64.0.2", peer.IP)
 }
 
+func TestResolveMatchesDNSAliasWithTrailingDot(t *testing.T) {
+	status, err := tailnet.ParseStatusJSON([]byte(`{
+		"Peer": {
+			"abc": {"DNSName": "homepc.personal.ts.net.", "TailscaleIPs": ["100.64.0.2"], "Online": true}
+		}
+	}`))
+	require.NoError(t, err)
+
+	peer, ok := status.Resolve("homepc.personal.ts.net.")
+
+	require.True(t, ok)
+	require.Equal(t, "100.64.0.2", peer.IP)
+}
+
 func TestJoinArgsUseControlURLAuthKeyAndHostname(t *testing.T) {
 	args, err := tailnet.JoinArgs(tailnet.JoinOptions{
 		ControlURL: "https://control.example",

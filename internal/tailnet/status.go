@@ -116,6 +116,7 @@ func JoinArgs(options JoinOptions) ([]string, error) {
 }
 
 func (s Status) Resolve(name string) (Peer, bool) {
+	name = normalizeLookupName(name)
 	if name == "" {
 		return Peer{}, false
 	}
@@ -131,6 +132,10 @@ func (s Status) Resolve(name string) (Peer, bool) {
 		}
 	}
 	return Peer{}, false
+}
+
+func normalizeLookupName(name string) string {
+	return strings.TrimSuffix(strings.TrimSpace(name), ".")
 }
 
 func normalizePeer(peer rawPeer) Peer {
