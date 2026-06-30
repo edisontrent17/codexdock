@@ -270,6 +270,10 @@ scripts also pin Go build caches under `/tmp` so an inherited shell cache
 setting cannot break the validation build. If `CODEXDOCK_BIN` is set while
 writing the runbook, the generated Mac preflight and run scripts preserve that
 binary path.
+The generated `finalize-trent.sh` sources
+`.dev-logs/trent-codexdock.env` by default when the TrentPlatform bootstrap
+helper has written reusable project and roadmap IDs there; set
+`CODEXDOCK_TRENT_ENV_FILE` to point it at a different sourceable env file.
 Because the runbook includes a Mac-to-WSL staging script, its generated
 `mac-preflight.sh` also requires `scp` and records `local_scp` in
 `preflight.txt`. All preflight reports record `local_go`; when

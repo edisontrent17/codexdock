@@ -264,10 +264,13 @@ grep -F "./scripts/e2e-remote.sh --preflight" "$RUNBOOK_DIR/mac-preflight.sh" >/
 grep -F "./scripts/e2e-remote.sh" "$RUNBOOK_DIR/mac-run.sh" >/dev/null
 grep -F 'CODEXDOCK_BIN=${CODEXDOCK_BIN:-"$HOME/.local/bin/codexdock"}' "$RUNBOOK_DIR/wsl-prepare.sh" >/dev/null
 grep -F '"$CODEXDOCK_BIN" doctor --repair --yes --target-os linux --role codex-host --workspace' "$RUNBOOK_DIR/wsl-prepare.sh" >/dev/null
+grep -F 'CODEXDOCK_TRENT_ENV_FILE=${CODEXDOCK_TRENT_ENV_FILE:-.dev-logs/trent-codexdock.env}' "$RUNBOOK_DIR/finalize-trent.sh" >/dev/null
+grep -F '. "$CODEXDOCK_TRENT_ENV_FILE"' "$RUNBOOK_DIR/finalize-trent.sh" >/dev/null
 grep -F "./scripts/trent-finalize-e2e.sh '$RUNBOOK_DIR'" "$RUNBOOK_DIR/finalize-trent.sh" >/dev/null
 grep -F "Run on the Mac" "$RUNBOOK_DIR/runbook.txt" >/dev/null
 grep -F "Run inside WSL" "$RUNBOOK_DIR/runbook.txt" >/dev/null
 grep -F "Install the latest CodexDock binary into WSL from the Mac" "$RUNBOOK_DIR/runbook.txt" >/dev/null
+grep -F "Source TrentPlatform bootstrap env" "$RUNBOOK_DIR/runbook.txt" >/dev/null
 
 RUNBOOK_BIN_DIR="$WORK/e2e-runbook-bin"
 CODEXDOCK_REPORT_DIR="$RUNBOOK_BIN_DIR" \

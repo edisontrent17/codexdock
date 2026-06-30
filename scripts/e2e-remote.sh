@@ -625,6 +625,10 @@ write_runbook() {
     printf '#!/usr/bin/env sh\n'
     printf 'set -eu\n'
     printf 'cd %s\n' "$(quote_sh "$ROOT")"
+    printf 'CODEXDOCK_TRENT_ENV_FILE=${CODEXDOCK_TRENT_ENV_FILE:-.dev-logs/trent-codexdock.env}\n'
+    printf 'if [ -f "$CODEXDOCK_TRENT_ENV_FILE" ]; then\n'
+    printf '  . "$CODEXDOCK_TRENT_ENV_FILE"\n'
+    printf 'fi\n'
     printf './scripts/trent-finalize-e2e.sh %s\n' "$(quote_sh "$REPORT_DIR")"
   } >"$finalize"
   chmod +x "$finalize"
@@ -640,6 +644,8 @@ write_runbook() {
     printf '  %s\n\n' "$mac_preflight"
     printf 'Run on the Mac to execute the full validation:\n'
     printf '  %s\n\n' "$mac_run"
+    printf 'Source TrentPlatform bootstrap env if it is not already exported:\n'
+    printf '  . .dev-logs/trent-codexdock.env\n\n'
     printf 'After the full report validates, run on the Mac with TrentPlatform token env set:\n'
     printf '  %s\n\n' "$finalize"
     printf 'Report directory:\n'
