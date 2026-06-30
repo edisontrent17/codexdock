@@ -864,6 +864,27 @@ grep -F "CODEXDOCK_TRENT_PROJECT=111764" "$TRENT_PROVISION_ENV" >/dev/null
 jq -e 'select(.orgName == "CodexDockSmoke" and .adminEmail == "admin@codexdock.example")' "$FAKE_CURL_PAYLOADS" >/dev/null
 jq -e 'select(.name == "CodexDock Agent" and (.scopes | join(",") == "metadata:read,metadata:write,data:read,data:write,query:execute"))' "$FAKE_CURL_PAYLOADS" >/dev/null
 
+BAD_TRENT_PROVISION_TOKEN_FILE="$WORK/bad-trent-provision-token.json"
+BAD_TRENT_PROVISION_ENV="$WORK/bad-trent-provision.env"
+: >"$FAKE_CURL_LOG"
+if CODEXDOCK_FAKE_CURL_LOG="$FAKE_CURL_LOG" \
+  CODEXDOCK_FAKE_CURL_BODY="$FAKE_CURL_BODY" \
+  CODEXDOCK_TRENT_BASE_URL=https://trent.example \
+  CODEXDOCK_TRENT_ORG_NAME=Bad_Org \
+  CODEXDOCK_TRENT_ADMIN_EMAIL=admin@codexdock.example \
+  CODEXDOCK_TRENT_ADMIN_PASSWORD=ChangeMe12345 \
+  CODEXDOCK_TRENT_TOKEN_FILE="$BAD_TRENT_PROVISION_TOKEN_FILE" \
+  CODEXDOCK_TRENT_ENV_FILE="$BAD_TRENT_PROVISION_ENV" \
+  PATH="$FAKE_BIN:$PATH" \
+  "$ROOT/scripts/trent-provision-org.sh" >"$WORK/trent-provision-bad-org.out" 2>&1; then
+  echo "expected TrentPlatform org provisioning to reject invalid org names before signup" >&2
+  exit 1
+fi
+grep -F "CODEXDOCK_TRENT_ORG_NAME must start with a letter and contain only letters and numbers" "$WORK/trent-provision-bad-org.out" >/dev/null
+test ! -s "$FAKE_CURL_LOG"
+test ! -e "$BAD_TRENT_PROVISION_TOKEN_FILE"
+test ! -e "$BAD_TRENT_PROVISION_ENV"
+
 TRENT_REPORT="$WORK/trent-report"
 mkdir -p "$TRENT_REPORT"
 cat >"$TRENT_REPORT/result.txt" <<'EOF'

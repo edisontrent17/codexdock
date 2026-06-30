@@ -70,13 +70,24 @@ require_not_blank CODEXDOCK_TRENT_ADMIN_DISPLAY_NAME "$ADMIN_DISPLAY_NAME"
 require_not_blank CODEXDOCK_TRENT_TOKEN_FILE "$TOKEN_FILE"
 require_not_blank CODEXDOCK_TRENT_ENV_FILE "$ENV_FILE"
 
+org_name_length=${#ORG_NAME}
 case "$ORG_NAME" in
-  [ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz][ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789][ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789]*) ;;
+  [ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz]*) ;;
   *)
-    echo "CODEXDOCK_TRENT_ORG_NAME must start with a letter and contain at least 3 letters or numbers" >&2
+    echo "CODEXDOCK_TRENT_ORG_NAME must start with a letter and contain only letters and numbers" >&2
     exit 2
     ;;
 esac
+case "$ORG_NAME" in
+  *[!ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789]*)
+    echo "CODEXDOCK_TRENT_ORG_NAME must start with a letter and contain only letters and numbers" >&2
+    exit 2
+    ;;
+esac
+if [ "$org_name_length" -lt 3 ] || [ "$org_name_length" -gt 63 ]; then
+  echo "CODEXDOCK_TRENT_ORG_NAME must be 3 to 63 characters" >&2
+  exit 2
+fi
 
 post_json() {
   path=$1
