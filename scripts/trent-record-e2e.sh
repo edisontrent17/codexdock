@@ -223,6 +223,21 @@ print_command_artifacts() {
   fi
 }
 
+print_handoff_artifacts() {
+  found=0
+  for name in wsl_preflight.txt wsl_prepare_plan.txt wsl_prepare.txt; do
+    artifact_file="$REPORT_DIR/$name"
+    if [ -f "$artifact_file" ]; then
+      found=1
+      printf '\n%s\n' "$name"
+      sed -n '1,80p' "$artifact_file"
+    fi
+  done
+  if [ "$found" = "0" ]; then
+    printf 'none\n'
+  fi
+}
+
 TITLE=${CODEXDOCK_TRENT_TITLE:-Remote E2E Report: $MACHINE $STATUS}
 
 CONTENT=$(mktemp "${TMPDIR:-/tmp}/codexdock-trent-content.XXXXXX")
@@ -254,6 +269,8 @@ trap cleanup EXIT INT TERM
     printf '\npreflight.txt\n'
     sed -n '1,80p' "$PREFLIGHT_FILE"
   fi
+  printf '\nhandoff artifacts\n'
+  print_handoff_artifacts
   printf '\ncommand artifacts\n'
   print_command_artifacts
   printf '\nresult.txt\n'

@@ -1044,6 +1044,22 @@ EOF
 cat >"$TRENT_REPORT/sessions_after_stop.out" <<'EOF'
 No tmux sessions found on homepc.
 EOF
+cat >"$TRENT_REPORT/wsl_preflight.txt" <<'EOF'
+status=success
+missing=none
+next=run mac-stage-wsl-codexdock.sh from the Mac, then mac-preflight.sh
+private_network_client=yes
+ssh_listener=yes
+EOF
+cat >"$TRENT_REPORT/wsl_prepare_plan.txt" <<'EOF'
+CodexDock repair plan (codex-host)
+1. private network client
+   curl -fsSL https://tailscale.com/install.sh | sh
+EOF
+cat >"$TRENT_REPORT/wsl_prepare.txt" <<'EOF'
+CodexDock repair plan (codex-host)
+repair complete
+EOF
 BIN_BUILD_REPORT="$WORK/bin-build-report"
 cp -R "$TRENT_REPORT" "$BIN_BUILD_REPORT"
 sed 's|^codexdock_bin=$|codexdock_bin=/usr/local/bin/codexdock|' "$TRENT_REPORT/context.txt" >"$BIN_BUILD_REPORT/context.txt"
@@ -1092,6 +1108,11 @@ jq -e '.values.Project == "111764"' "$FAKE_CURL_BODY" >/dev/null
 jq -e '.values.Content | contains("status=success")' "$FAKE_CURL_BODY" >/dev/null
 jq -e '.values.Content | contains("session_stopped=yes")' "$FAKE_CURL_BODY" >/dev/null
 jq -e '.values.Content | contains("command artifacts")' "$FAKE_CURL_BODY" >/dev/null
+jq -e '.values.Content | contains("handoff artifacts")' "$FAKE_CURL_BODY" >/dev/null
+jq -e '.values.Content | contains("wsl_preflight.txt")' "$FAKE_CURL_BODY" >/dev/null
+jq -e '.values.Content | contains("wsl_prepare_plan.txt")' "$FAKE_CURL_BODY" >/dev/null
+jq -e '.values.Content | contains("wsl_prepare.txt")' "$FAKE_CURL_BODY" >/dev/null
+jq -e '.values.Content | contains("private_network_client=yes")' "$FAKE_CURL_BODY" >/dev/null
 jq -e '.values.Content | contains("build.cmd: env GOCACHE=/tmp/codexdock-gocache GOMODCACHE=/tmp/codexdock-gomodcache /repo/scripts/build.sh")' "$FAKE_CURL_BODY" >/dev/null
 jq -e '.values.Content | contains("init.cmd: env HOME=/tmp/codexdock-home /tmp/codexdock init --network personal --machine homepc")' "$FAKE_CURL_BODY" >/dev/null
 jq -e '.values.Content | contains("doctor.out: bytes=")' "$FAKE_CURL_BODY" >/dev/null

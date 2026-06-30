@@ -409,13 +409,14 @@ CODEXDOCK_TRENT_TOKEN_FILE=/tmp/trentplatform-codexdock-admin.json \
 ```
 
 The helper reads `result.txt`, optional `context.txt`, optional
-`preflight.txt`, and any command artifacts in the report directory, then
-creates a `CodexDock.Artifact` record. Full-run artifacts include the first
-line of each recorded `.cmd` file and byte counts for matching `.out` and
-`.err` files, so TrentPlatform keeps a compact manifest of the local evidence
-used by the closure gate. Manifest command lines keep sensitive flag names such
-as `--ssh-authorized-key` and `--enrollment-key`, but redact their values
-before publishing. Use
+`preflight.txt`, WSL handoff evidence such as `wsl_preflight.txt`,
+`wsl_prepare_plan.txt`, and `wsl_prepare.txt`, and any command artifacts in the
+report directory, then creates a `CodexDock.Artifact` record. Full-run
+artifacts include the first line of each recorded `.cmd` file and byte counts
+for matching `.out` and `.err` files, so TrentPlatform keeps a compact manifest
+of the local evidence used by the closure gate. Manifest command lines keep
+sensitive flag names such as `--ssh-authorized-key` and `--enrollment-key`, but
+redact their values before publishing. Use
 `CODEXDOCK_TRENT_TOKEN` instead of
 `CODEXDOCK_TRENT_TOKEN_FILE` when providing the bearer token directly. The
 default artifact type is `plan`; override it with
