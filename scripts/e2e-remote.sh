@@ -26,6 +26,7 @@ Environment:
   CODEXDOCK_LOG_LINES  Log lines to capture (default: 40)
   CODEXDOCK_SSH_AUTHORIZED_KEY Optional public key to add during CODEXDOCK_PREPARE=1
   CODEXDOCK_SSH_AUTHORIZED_KEY_FILE Optional public key file to add during CODEXDOCK_PREPARE=1
+  CODEXDOCK_BIN       Optional local codexdock binary to validate instead of building from source
   CODEXDOCK_REQUIRE_SCP Set to 1 when preflight must verify scp for runbook staging
   CODEXDOCK_TARGET_ARCH Linux GOARCH for runbook WSL staging (default: amd64)
   CODEXDOCK_REPORT_DIR Directory for command outputs (default: .dev-logs/e2e-remote/<timestamp>)
@@ -44,6 +45,7 @@ if [ "${CODEXDOCK_CONTROL_URL+x}" = x ]; then CONTROL_URL_PROVIDED=1; else CONTR
 if [ "${CODEXDOCK_WORKSPACE+x}" = x ]; then WORKSPACE_PROVIDED=1; else WORKSPACE_PROVIDED=0; fi
 if [ "${CODEXDOCK_SSH_AUTHORIZED_KEY+x}" = x ]; then SSH_AUTHORIZED_KEY_PROVIDED=1; else SSH_AUTHORIZED_KEY_PROVIDED=0; fi
 if [ "${CODEXDOCK_SSH_AUTHORIZED_KEY_FILE+x}" = x ]; then SSH_AUTHORIZED_KEY_FILE_PROVIDED=1; else SSH_AUTHORIZED_KEY_FILE_PROVIDED=0; fi
+if [ "${CODEXDOCK_BIN+x}" = x ]; then CODEXDOCK_BIN_PROVIDED=1; else CODEXDOCK_BIN_PROVIDED=0; fi
 
 NETWORK=$(trim_value "${CODEXDOCK_NETWORK:-personal}")
 MACHINE=$(trim_value "${CODEXDOCK_MACHINE:-homepc}")
@@ -63,6 +65,7 @@ PROMPT=$(trim_value "${CODEXDOCK_PROMPT:-codexdock smoke ping}")
 LOG_LINES=$(trim_value "${CODEXDOCK_LOG_LINES:-40}")
 SSH_AUTHORIZED_KEY=$(trim_value "${CODEXDOCK_SSH_AUTHORIZED_KEY:-}")
 SSH_AUTHORIZED_KEY_FILE=$(trim_value "${CODEXDOCK_SSH_AUTHORIZED_KEY_FILE:-}")
+CODEXDOCK_BIN=$(trim_value "${CODEXDOCK_BIN:-}")
 REQUIRE_SCP=$(trim_value "${CODEXDOCK_REQUIRE_SCP:-0}")
 TARGET_ARCH=$(trim_value "${CODEXDOCK_TARGET_ARCH:-amd64}")
 
@@ -469,6 +472,27 @@ require_valid_control_url() {
   fi
 }
 
+codexdock_bin_error() {
+  if [ "$CODEXDOCK_BIN_PROVIDED" != "1" ]; then
+    return 0
+  fi
+  if [ -z "$CODEXDOCK_BIN" ]; then
+    printf 'CODEXDOCK_BIN cannot be blank'
+    return 0
+  fi
+  if [ ! -f "$CODEXDOCK_BIN" ] || [ ! -x "$CODEXDOCK_BIN" ]; then
+    printf 'CODEXDOCK_BIN is not executable: %s' "$CODEXDOCK_BIN"
+  fi
+}
+
+require_valid_codexdock_bin() {
+  message=$(codexdock_bin_error)
+  if [ -n "$message" ]; then
+    echo "$message" >&2
+    exit 2
+  fi
+}
+
 quote_sh() {
   printf "'"
   printf '%s' "$1" | sed "s/'/'\\\\''/g"
@@ -486,6 +510,9 @@ write_run_env() {
     printf 'env \\\n'
     printf '  GOCACHE=%s \\\n' "$(quote_sh "/tmp/codexdock-gocache")"
     printf '  GOMODCACHE=%s \\\n' "$(quote_sh "/tmp/codexdock-gomodcache")"
+    if [ -n "$CODEXDOCK_BIN" ]; then
+      printf '  CODEXDOCK_BIN=%s \\\n' "$(quote_sh "$CODEXDOCK_BIN")"
+    fi
     printf '  CODEXDOCK_NETWORK=%s \\\n' "$(quote_sh "$NETWORK")"
     printf '  CODEXDOCK_MACHINE=%s \\\n' "$(quote_sh "$MACHINE")"
     printf '  CODEXDOCK_HOST=%s \\\n' "$(quote_sh "$HOST")"
@@ -543,6 +570,7 @@ write_runbook() {
   require_valid_log_lines
   require_valid_control_url
   require_valid_profile
+  require_valid_codexdock_bin
   require_supported_target_arch
   require_valid_ssh_authorized_key_sources
   ssh_key_arg=$(runbook_ssh_authorized_key_arg)
@@ -641,6 +669,7 @@ ssh_authorized_key_set=$(if [ "$SSH_AUTHORIZED_KEY_PROVIDED" = "1" ]; then print
 ssh_authorized_key_file_set=$(if [ "$SSH_AUTHORIZED_KEY_FILE_PROVIDED" = "1" ]; then printf yes; else printf no; fi)
 require_scp=$REQUIRE_SCP
 target_arch=$TARGET_ARCH
+codexdock_bin=$CODEXDOCK_BIN
 EOF
 }
 
@@ -739,7 +768,22 @@ run_preflight() {
   ssh_status=$(command_status ssh)
   scp_status=$(command_status scp)
   private_network_status=$(command_status tailscale)
-  if [ "$go_status" != "yes" ]; then
+  codexdock_bin_status=not_set
+  if [ "$CODEXDOCK_BIN_PROVIDED" = "1" ]; then
+    if [ -z "$CODEXDOCK_BIN" ]; then
+      codexdock_bin_status=invalid
+      invalid=$(append_invalid "$invalid" "CODEXDOCK_BIN cannot be blank")
+    elif [ ! -f "$CODEXDOCK_BIN" ]; then
+      codexdock_bin_status=missing
+      invalid=$(append_invalid "$invalid" "CODEXDOCK_BIN is not executable")
+    elif [ ! -x "$CODEXDOCK_BIN" ]; then
+      codexdock_bin_status=not_executable
+      invalid=$(append_invalid "$invalid" "CODEXDOCK_BIN is not executable")
+    else
+      codexdock_bin_status=executable
+    fi
+  fi
+  if [ "$CODEXDOCK_BIN_PROVIDED" = "0" ] && [ "$go_status" != "yes" ]; then
     missing=$(append_name "$missing" go)
   fi
   if [ "$ssh_status" != "yes" ]; then
@@ -795,6 +839,7 @@ status=$preflight_status
 missing=$missing
 invalid=$invalid
 local_go=$go_status
+local_codexdock_bin=$codexdock_bin_status
 local_ssh=$ssh_status
 local_scp=$scp_status
 scp_required=$(if [ "$REQUIRE_SCP" = "1" ]; then printf yes; else printf no; fi)
@@ -852,6 +897,7 @@ require_valid_ssh_port
 require_valid_log_lines
 require_valid_control_url
 require_valid_profile
+require_valid_codexdock_bin
 require_supported_target_arch
 require_valid_ssh_authorized_key_sources
 
@@ -917,6 +963,7 @@ ssh_authorized_key_set=$(if [ "$SSH_AUTHORIZED_KEY_PROVIDED" = "1" ]; then print
 ssh_authorized_key_file_set=$(if [ "$SSH_AUTHORIZED_KEY_FILE_PROVIDED" = "1" ]; then printf yes; else printf no; fi)
 require_scp=$REQUIRE_SCP
 target_arch=$TARGET_ARCH
+codexdock_bin=$CODEXDOCK_BIN
 EOF
 }
 
@@ -997,7 +1044,12 @@ COMMIT=${COMMIT:-e2e}
 BUILD_DATE=${BUILD_DATE:-1970-01-01T00:00:00Z}
 
 write_context
-run_step build env GOCACHE="$GOCACHE" GOMODCACHE="$GOMODCACHE" VERSION="$VERSION" COMMIT="$COMMIT" BUILD_DATE="$BUILD_DATE" OUT="$BIN" "$ROOT/scripts/build.sh"
+if [ -n "$CODEXDOCK_BIN" ]; then
+  BIN=$CODEXDOCK_BIN
+  run_step build env CODEXDOCK_BIN="$CODEXDOCK_BIN" "$BIN" version
+else
+  run_step build env GOCACHE="$GOCACHE" GOMODCACHE="$GOMODCACHE" VERSION="$VERSION" COMMIT="$COMMIT" BUILD_DATE="$BUILD_DATE" OUT="$BIN" "$ROOT/scripts/build.sh"
+fi
 
 if [ "$ADOPT" = "1" ]; then
   if [ -n "$CONTROL_URL" ]; then

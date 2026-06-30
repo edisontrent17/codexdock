@@ -16,7 +16,8 @@ FAKE_BIN="$WORK/bin"
 FAKE_LOG="$WORK/fake-tools.log"
 FAKE_SESSION_DIR="$WORK/fake-sessions"
 DIRECT_SESSION_DIR="$WORK/direct-e2e-sessions"
-mkdir -p "$HOME_DIR" "$JOIN_HOME_DIR" "$FAKE_BIN" "$FAKE_SESSION_DIR" "$DIRECT_SESSION_DIR"
+BIN_MODE_SESSION_DIR="$WORK/bin-mode-e2e-sessions"
+mkdir -p "$HOME_DIR" "$JOIN_HOME_DIR" "$FAKE_BIN" "$FAKE_SESSION_DIR" "$DIRECT_SESSION_DIR" "$BIN_MODE_SESSION_DIR"
 : >"$FAKE_LOG"
 
 GOCACHE=${GOCACHE:-/tmp/codexdock-gocache}
@@ -183,6 +184,21 @@ grep -F "control_url=https://control.example" "$DIRECT_REPORT/context.txt" >/dev
 grep -F -- "--control-url https://control.example" "$DIRECT_REPORT/init.cmd" >/dev/null
 "$ROOT/scripts/validate-e2e-report.sh" --full "$DIRECT_REPORT" >"$WORK/direct-control-validate.out"
 grep -F "remote E2E full report ok" "$WORK/direct-control-validate.out" >/dev/null
+
+BIN_MODE_REPORT="$WORK/bin-mode-report"
+CODEXDOCK_FAKE_LOG="$FAKE_LOG" \
+  CODEXDOCK_FAKE_SESSION_DIR="$BIN_MODE_SESSION_DIR" \
+  PATH="$FAKE_BIN:$PATH" \
+  CODEXDOCK_BIN="$BIN" \
+  CODEXDOCK_HOST=100.64.0.10 \
+  CODEXDOCK_USER=manoj \
+  CODEXDOCK_REPORT_DIR="$BIN_MODE_REPORT" \
+  "$ROOT/scripts/e2e-remote.sh" >"$WORK/bin-mode-e2e.out"
+grep -F "remote e2e ok" "$WORK/bin-mode-e2e.out" >/dev/null
+grep -F "CODEXDOCK_BIN=$BIN" "$BIN_MODE_REPORT/build.cmd" >/dev/null
+grep -F "codexdock $VERSION" "$BIN_MODE_REPORT/build.out" >/dev/null
+"$ROOT/scripts/validate-e2e-report.sh" --full "$BIN_MODE_REPORT" >"$WORK/bin-mode-validate.out"
+grep -F "remote E2E full report ok" "$WORK/bin-mode-validate.out" >/dev/null
 
 run() {
   CODEXDOCK_FAKE_LOG="$FAKE_LOG" CODEXDOCK_FAKE_SESSION_DIR="$FAKE_SESSION_DIR" PATH="$FAKE_BIN:$PATH" HOME="$HOME_DIR" "$BIN" "$@"

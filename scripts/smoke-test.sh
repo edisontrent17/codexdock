@@ -215,6 +215,9 @@ grep -F "codexdock doctor --all" "$WORK/e2e-plan.out" >/dev/null
 grep -F "codexdock sessions" "$WORK/e2e-plan.out" >/dev/null
 grep -F "codexdock stop homepc --force" "$WORK/e2e-plan.out" >/dev/null
 
+"$ROOT/scripts/e2e-remote.sh" --help >"$WORK/e2e-help.out"
+grep -F "CODEXDOCK_BIN" "$WORK/e2e-help.out" >/dev/null
+
 CODEXDOCK_CONTROL_URL=https://control.example "$ROOT/scripts/e2e-remote.sh" --print-plan >"$WORK/e2e-plan-control-url.out"
 grep -F "codexdock init --network personal --machine homepc --host <CODEXDOCK_HOST> --ssh-user <CODEXDOCK_USER> --ssh-port 22 --control-url https://control.example --workspace" "$WORK/e2e-plan-control-url.out" >/dev/null
 
@@ -265,6 +268,16 @@ grep -F "./scripts/trent-finalize-e2e.sh '$RUNBOOK_DIR'" "$RUNBOOK_DIR/finalize-
 grep -F "Run on the Mac" "$RUNBOOK_DIR/runbook.txt" >/dev/null
 grep -F "Run inside WSL" "$RUNBOOK_DIR/runbook.txt" >/dev/null
 grep -F "Install the latest CodexDock binary into WSL from the Mac" "$RUNBOOK_DIR/runbook.txt" >/dev/null
+
+RUNBOOK_BIN_DIR="$WORK/e2e-runbook-bin"
+CODEXDOCK_REPORT_DIR="$RUNBOOK_BIN_DIR" \
+  CODEXDOCK_HOST=100.64.0.2 \
+  CODEXDOCK_USER=manoj \
+  CODEXDOCK_BIN="$BIN" \
+  "$ROOT/scripts/e2e-remote.sh" --write-runbook >"$WORK/e2e-runbook-bin.out"
+grep -F "remote e2e runbook written" "$WORK/e2e-runbook-bin.out" >/dev/null
+grep -F "CODEXDOCK_BIN='$BIN'" "$RUNBOOK_BIN_DIR/mac-preflight.sh" >/dev/null
+grep -F "CODEXDOCK_BIN='$BIN'" "$RUNBOOK_BIN_DIR/mac-run.sh" >/dev/null
 
 TRIMMED_RUNBOOK_DIR="$WORK/e2e-runbook-trimmed-env"
 CODEXDOCK_REPORT_DIR="$TRIMMED_RUNBOOK_DIR" \
@@ -521,6 +534,21 @@ grep -F "remote e2e preflight failed" "$WORK/e2e-preflight-missing-go.out" >/dev
 grep -F "missing=go" "$GO_PREFLIGHT_REPORT/preflight.txt" >/dev/null
 grep -F "local_go=no" "$GO_PREFLIGHT_REPORT/preflight.txt" >/dev/null
 grep -F "local_ssh=yes" "$GO_PREFLIGHT_REPORT/preflight.txt" >/dev/null
+
+BIN_PREFLIGHT_REPORT="$WORK/e2e-preflight-bin-no-go"
+if ! CODEXDOCK_REPORT_DIR="$BIN_PREFLIGHT_REPORT" \
+  CODEXDOCK_HOST=100.64.0.2 \
+  CODEXDOCK_USER=manoj \
+  CODEXDOCK_BIN="$BIN" \
+  PATH="$NO_GO_BIN" \
+  "$ROOT/scripts/e2e-remote.sh" --preflight >"$WORK/e2e-preflight-bin-no-go.out" 2>&1; then
+  echo "expected remote E2E preflight to pass without go when CODEXDOCK_BIN is executable" >&2
+  exit 1
+fi
+grep -F "remote e2e preflight ok" "$WORK/e2e-preflight-bin-no-go.out" >/dev/null
+grep -F "missing=none" "$BIN_PREFLIGHT_REPORT/preflight.txt" >/dev/null
+grep -F "local_go=no" "$BIN_PREFLIGHT_REPORT/preflight.txt" >/dev/null
+grep -F "local_codexdock_bin=executable" "$BIN_PREFLIGHT_REPORT/preflight.txt" >/dev/null
 
 BAD_PORT_PREFLIGHT_REPORT="$WORK/e2e-preflight-bad-port"
 if CODEXDOCK_REPORT_DIR="$BAD_PORT_PREFLIGHT_REPORT" \
@@ -814,6 +842,18 @@ EOF
 cat >"$TRENT_REPORT/sessions_after_stop.out" <<'EOF'
 No tmux sessions found on homepc.
 EOF
+BIN_BUILD_REPORT="$WORK/bin-build-report"
+cp -R "$TRENT_REPORT" "$BIN_BUILD_REPORT"
+cat >"$BIN_BUILD_REPORT/build.cmd" <<'EOF'
+env CODEXDOCK_BIN=/usr/local/bin/codexdock /usr/local/bin/codexdock version
+EOF
+cat >"$BIN_BUILD_REPORT/build.out" <<'EOF'
+codexdock smoke
+commit smoke
+built 1970-01-01T00:00:00Z
+EOF
+"$ROOT/scripts/validate-e2e-report.sh" --full "$BIN_BUILD_REPORT" >"$WORK/bin-build-validate.out"
+grep -F "remote E2E full report ok" "$WORK/bin-build-validate.out" >/dev/null
 CODEXDOCK_FAKE_CURL_LOG="$FAKE_CURL_LOG" \
   CODEXDOCK_FAKE_CURL_BODY="$FAKE_CURL_BODY" \
   CODEXDOCK_TRENT_TOKEN=test-token \

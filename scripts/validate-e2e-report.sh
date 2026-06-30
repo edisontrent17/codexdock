@@ -94,6 +94,15 @@ require_command_words() {
   esac
 }
 
+require_build_artifact() {
+  if grep -F "build.sh" "$REPORT_DIR/build.cmd" >/dev/null; then
+    return 0
+  fi
+  require_command_text build "CODEXDOCK_BIN="
+  require_command_token build version
+  require_contains "$REPORT_DIR/build.out" "codexdock"
+}
+
 field_count() {
   file=$1
   name=$2
@@ -400,7 +409,7 @@ for step in $required_steps; do
   done
 done
 
-require_command_text build "build.sh"
+require_build_artifact
 if [ -f "$REPORT_DIR/init.cmd" ]; then
   require_command_token init init
   require_command_words init "--network $(context_field network)"

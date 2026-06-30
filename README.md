@@ -218,10 +218,12 @@ CODEXDOCK_ADOPT=1 CODEXDOCK_USER=manoj ./scripts/e2e-remote.sh --preflight
 ```
 
 Preflight does not build or start a remote session. It checks local inputs and
-tool availability, including `go` for the validation build, writes
+tool availability, including `go` for the validation build unless
+`CODEXDOCK_BIN` points to an executable local CodexDock binary. It writes
 `preflight.txt` plus `result.txt` to the report directory, and returns exit
 code `2` when required inputs or local tools are missing, or when configured
-numeric, flag, control URL, and target architecture values are invalid.
+numeric, flag, control URL, binary path, and target architecture values are
+invalid.
 Remote E2E environment values are trimmed before validation, report context
 writing, and generated runbook scripts, so pasted values with surrounding
 spaces produce the same commands as clean values. Explicit whitespace-only
@@ -262,11 +264,15 @@ when set. `CODEXDOCK_SESSION` must contain only letters, numbers, underscores,
 or hyphens. SSH authorized key values cannot be blank when set, and key files
 must have a nonblank first line before runbook files are written. The generated Mac
 scripts also pin Go build caches under `/tmp` so an inherited shell cache
-setting cannot break the validation build.
+setting cannot break the validation build. If `CODEXDOCK_BIN` is set while
+writing the runbook, the generated Mac preflight and run scripts preserve that
+binary path.
 Because the runbook includes a Mac-to-WSL staging script, its generated
 `mac-preflight.sh` also requires `scp` and records `local_scp` in
-`preflight.txt`. All preflight reports record `local_go` because the full
-validation builds CodexDock before opening SSH.
+`preflight.txt`. All preflight reports record `local_go`; when
+`CODEXDOCK_BIN` is provided and executable, the full validation records that
+binary's `codexdock version` output instead of building from source, so Go is
+not required for the Mac validation run.
 `CODEXDOCK_TARGET_ARCH` controls the Linux binary architecture used by
 `mac-stage-wsl-codexdock.sh`; it defaults to `amd64` and can be set to `arm64`
 for ARM64 Windows/WSL hosts. Generated Mac preflight and run scripts preserve
@@ -283,6 +289,7 @@ CODEXDOCK_CONTROL_URL=https://control.example CODEXDOCK_HOST=100.64.0.2 CODEXDOC
 CODEXDOCK_ADOPT=1 CODEXDOCK_USER=manoj ./scripts/e2e-remote.sh
 CODEXDOCK_PREPARE=1 CODEXDOCK_HOST=100.64.0.2 CODEXDOCK_USER=manoj ./scripts/e2e-remote.sh
 CODEXDOCK_PREPARE=1 CODEXDOCK_SSH_AUTHORIZED_KEY_FILE=~/.ssh/id_ed25519.pub CODEXDOCK_HOST=100.64.0.2 CODEXDOCK_USER=manoj ./scripts/e2e-remote.sh
+CODEXDOCK_BIN="$HOME/.local/bin/codexdock" CODEXDOCK_HOST=100.64.0.2 CODEXDOCK_USER=manoj ./scripts/e2e-remote.sh
 ```
 
 Remote validation uses a dedicated tmux session named `codexdock-e2e` by
@@ -293,10 +300,12 @@ the validation to use the standard session name.
 Remote validation writes a command report by default under
 `.dev-logs/e2e-remote/<timestamp>`. Set `CODEXDOCK_REPORT_DIR=/path/to/report`
 to choose the destination. It rejects unsupported `CODEXDOCK_TARGET_ARCH`
-values before writing report files. The report contains the command, stdout,
-and stderr for build, init/adopt, optional prepare, targeted doctor,
-network-wide doctor, start, targeted sessions, network-wide sessions, send,
-logs, confirmed stop, and a post-stop targeted session check.
+values before writing report files. It also rejects a provided `CODEXDOCK_BIN`
+unless it points to an executable file. The report contains the command,
+stdout, and stderr for build or binary-version proof, init/adopt, optional
+prepare, targeted doctor, network-wide doctor, start, targeted sessions,
+network-wide sessions, send, logs, confirmed stop, and a post-stop targeted
+session check.
 
 If the remote validation fails after the session has started but before the
 normal stop step runs, the harness attempts a best-effort cleanup stop and
