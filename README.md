@@ -377,7 +377,10 @@ written to a sourceable file for later report publishing and roadmap closure.
 The Trent record, close, and finalizer helpers source
 `.dev-logs/trent-codexdock.env` by default when it exists, and auto-export the
 assignments so values written by the bootstrap helper are visible to child
-scripts. Set `CODEXDOCK_TRENT_ENV_FILE` to use a different sourceable env file.
+scripts. Explicit `CODEXDOCK_TRENT_PROJECT`,
+`CODEXDOCK_TRENT_REPOSITORY_ARTIFACT`, and `CODEXDOCK_TRENT_ROADMAP_IDS`
+environment values take precedence over values loaded from that file. Set
+`CODEXDOCK_TRENT_ENV_FILE` to use a different sourceable env file.
 
 Publish a validation report to TrentPlatform after a preflight or remote run:
 

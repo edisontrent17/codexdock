@@ -37,10 +37,28 @@ PREFLIGHT_FILE="$REPORT_DIR/preflight.txt"
 
 load_trent_env_file() {
   env_file=${CODEXDOCK_TRENT_ENV_FILE:-"$ROOT/.dev-logs/trent-codexdock.env"}
+  project_was_set=${CODEXDOCK_TRENT_PROJECT+x}
+  project_value=${CODEXDOCK_TRENT_PROJECT-}
+  repository_artifact_was_set=${CODEXDOCK_TRENT_REPOSITORY_ARTIFACT+x}
+  repository_artifact_value=${CODEXDOCK_TRENT_REPOSITORY_ARTIFACT-}
+  roadmap_ids_was_set=${CODEXDOCK_TRENT_ROADMAP_IDS+x}
+  roadmap_ids_value=${CODEXDOCK_TRENT_ROADMAP_IDS-}
   if [ -f "$env_file" ]; then
     set -a
     . "$env_file"
     set +a
+  fi
+  if [ "$project_was_set" = x ]; then
+    CODEXDOCK_TRENT_PROJECT=$project_value
+    export CODEXDOCK_TRENT_PROJECT
+  fi
+  if [ "$repository_artifact_was_set" = x ]; then
+    CODEXDOCK_TRENT_REPOSITORY_ARTIFACT=$repository_artifact_value
+    export CODEXDOCK_TRENT_REPOSITORY_ARTIFACT
+  fi
+  if [ "$roadmap_ids_was_set" = x ]; then
+    CODEXDOCK_TRENT_ROADMAP_IDS=$roadmap_ids_value
+    export CODEXDOCK_TRENT_ROADMAP_IDS
   fi
 }
 

@@ -8,6 +8,8 @@ cleanup() {
   rm -rf "$WORK"
 }
 trap cleanup EXIT INT TERM
+CODEXDOCK_TRENT_ENV_FILE="$WORK/default-trent-env-does-not-exist"
+export CODEXDOCK_TRENT_ENV_FILE
 
 BIN="$WORK/codexdock"
 HOME_DIR="$WORK/home"
@@ -1064,6 +1066,22 @@ CODEXDOCK_FAKE_CURL_LOG="$FAKE_CURL_LOG" \
 grep -F '"id":12345' "$WORK/trent-record-env-file.out" >/dev/null
 jq -e '.values.Project == "111764"' "$FAKE_CURL_BODY" >/dev/null
 
+TRENT_OVERRIDE_ENV="$WORK/trent-override.env"
+cat >"$TRENT_OVERRIDE_ENV" <<'EOF'
+CODEXDOCK_TRENT_PROJECT=222333
+CODEXDOCK_TRENT_ROADMAP_IDS='222334 222335'
+EOF
+: >"$FAKE_CURL_LOG"
+CODEXDOCK_FAKE_CURL_LOG="$FAKE_CURL_LOG" \
+  CODEXDOCK_FAKE_CURL_BODY="$FAKE_CURL_BODY" \
+  CODEXDOCK_TRENT_TOKEN=test-token \
+  CODEXDOCK_TRENT_PROJECT=111764 \
+  CODEXDOCK_TRENT_BASE_URL=https://trent.example \
+  CODEXDOCK_TRENT_ENV_FILE="$TRENT_OVERRIDE_ENV" \
+  PATH="$FAKE_BIN:$PATH" \
+  "$ROOT/scripts/trent-record-e2e.sh" "$TRENT_REPORT" >"$WORK/trent-record-env-override.out"
+jq -e '.values.Project == "111764"' "$FAKE_CURL_BODY" >/dev/null
+
 TRENT_KEY_REPORT="$WORK/trent-report-key"
 cp -R "$TRENT_REPORT" "$TRENT_KEY_REPORT"
 sed 's/^ssh_authorized_key_set=no$/ssh_authorized_key_set=yes/' "$TRENT_REPORT/context.txt" >"$TRENT_KEY_REPORT/context.txt"
@@ -1135,6 +1153,20 @@ grep -F "https://trent.example/api/v1/data/CodexDock/RoadmapItem/222002" "$FAKE_
 CODEXDOCK_FAKE_CURL_LOG="$FAKE_CURL_LOG" \
   CODEXDOCK_FAKE_CURL_BODY="$FAKE_CURL_BODY" \
   CODEXDOCK_TRENT_TOKEN=test-token \
+  CODEXDOCK_TRENT_BASE_URL=https://trent.example \
+  CODEXDOCK_TRENT_ROADMAP_IDS='111768 111769' \
+  CODEXDOCK_TRENT_ENV_FILE="$TRENT_OVERRIDE_ENV" \
+  PATH="$FAKE_BIN:$PATH" \
+  "$ROOT/scripts/trent-close-roadmap.sh" "$TRENT_REPORT" >"$WORK/trent-close-env-override.out"
+grep -F "closed roadmap item 111768" "$WORK/trent-close-env-override.out" >/dev/null
+grep -F "closed roadmap item 111769" "$WORK/trent-close-env-override.out" >/dev/null
+grep -F "https://trent.example/api/v1/data/CodexDock/RoadmapItem/111768" "$FAKE_CURL_LOG" >/dev/null
+grep -F "https://trent.example/api/v1/data/CodexDock/RoadmapItem/111769" "$FAKE_CURL_LOG" >/dev/null
+
+: >"$FAKE_CURL_LOG"
+CODEXDOCK_FAKE_CURL_LOG="$FAKE_CURL_LOG" \
+  CODEXDOCK_FAKE_CURL_BODY="$FAKE_CURL_BODY" \
+  CODEXDOCK_TRENT_TOKEN=test-token \
   CODEXDOCK_TRENT_PROJECT=111764 \
   CODEXDOCK_TRENT_BASE_URL=https://trent.example \
   PATH="$FAKE_BIN:$PATH" \
@@ -1167,6 +1199,21 @@ grep -F "closed roadmap item 222002" "$WORK/trent-finalize-env-file.out" >/dev/n
 grep -F "https://trent.example/api/v1/data/CodexDock/Artifact" "$FAKE_CURL_LOG" >/dev/null
 grep -F "https://trent.example/api/v1/data/CodexDock/RoadmapItem/222001" "$FAKE_CURL_LOG" >/dev/null
 grep -F "https://trent.example/api/v1/data/CodexDock/RoadmapItem/222002" "$FAKE_CURL_LOG" >/dev/null
+
+: >"$FAKE_CURL_LOG"
+CODEXDOCK_FAKE_CURL_LOG="$FAKE_CURL_LOG" \
+  CODEXDOCK_FAKE_CURL_BODY="$FAKE_CURL_BODY" \
+  CODEXDOCK_TRENT_TOKEN=test-token \
+  CODEXDOCK_TRENT_PROJECT=111764 \
+  CODEXDOCK_TRENT_ROADMAP_IDS='111768 111769' \
+  CODEXDOCK_TRENT_BASE_URL=https://trent.example \
+  CODEXDOCK_TRENT_ENV_FILE="$TRENT_OVERRIDE_ENV" \
+  PATH="$FAKE_BIN:$PATH" \
+  "$ROOT/scripts/trent-finalize-e2e.sh" "$TRENT_REPORT" >"$WORK/trent-finalize-env-override.out"
+grep -F "closed roadmap item 111768" "$WORK/trent-finalize-env-override.out" >/dev/null
+grep -F "closed roadmap item 111769" "$WORK/trent-finalize-env-override.out" >/dev/null
+grep -F "https://trent.example/api/v1/data/CodexDock/RoadmapItem/111768" "$FAKE_CURL_LOG" >/dev/null
+grep -F "https://trent.example/api/v1/data/CodexDock/RoadmapItem/111769" "$FAKE_CURL_LOG" >/dev/null
 
 BAD_CONTEXT_CLOSE_REPORT="$WORK/bad-context-close-report"
 cp -R "$TRENT_REPORT" "$BAD_CONTEXT_CLOSE_REPORT"
