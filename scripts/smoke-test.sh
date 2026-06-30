@@ -1346,6 +1346,33 @@ fi
 grep -F "remote E2E report is missing required artifact: cleanup_stop.cmd" "$WORK/trent-close-missing-cleanup-artifacts.out" >/dev/null
 test ! -s "$FAKE_CURL_LOG"
 
+FAILED_CLEANUP_EXIT_CLOSE_REPORT="$WORK/failed-cleanup-exit-close-report"
+cp -R "$TRENT_REPORT" "$FAILED_CLEANUP_EXIT_CLOSE_REPORT"
+sed -e 's/^cleanup_attempted=no$/cleanup_attempted=yes/' \
+  -e 's/^cleanup_exit_code=not_applicable$/cleanup_exit_code=1/' \
+  "$TRENT_REPORT/result.txt" >"$FAILED_CLEANUP_EXIT_CLOSE_REPORT/result.txt"
+cat >"$FAILED_CLEANUP_EXIT_CLOSE_REPORT/cleanup_stop.cmd" <<'EOF'
+env HOME=/tmp/codexdock-home /tmp/codexdock stop homepc --force
+EOF
+cat >"$FAILED_CLEANUP_EXIT_CLOSE_REPORT/cleanup_stop.out" <<'EOF'
+cleanup stop failed
+EOF
+cat >"$FAILED_CLEANUP_EXIT_CLOSE_REPORT/cleanup_stop.err" <<'EOF'
+exit status 1
+EOF
+: >"$FAKE_CURL_LOG"
+if CODEXDOCK_FAKE_CURL_LOG="$FAKE_CURL_LOG" \
+  CODEXDOCK_FAKE_CURL_BODY="$FAKE_CURL_BODY" \
+  CODEXDOCK_TRENT_TOKEN=test-token \
+  CODEXDOCK_TRENT_BASE_URL=https://trent.example \
+  PATH="$FAKE_BIN:$PATH" \
+  "$ROOT/scripts/trent-close-roadmap.sh" "$FAILED_CLEANUP_EXIT_CLOSE_REPORT" >"$WORK/trent-close-failed-cleanup-exit.out" 2>&1; then
+  echo "expected TrentPlatform roadmap closure to reject successful reports with failed cleanup" >&2
+  exit 1
+fi
+grep -F "remote E2E report result cleanup_exit_code must be 0 when cleanup_attempted=yes: 1" "$WORK/trent-close-failed-cleanup-exit.out" >/dev/null
+test ! -s "$FAKE_CURL_LOG"
+
 BAD_CONTEXT_MODE_CLOSE_REPORT="$WORK/bad-context-mode-close-report"
 cp -R "$TRENT_REPORT" "$BAD_CONTEXT_MODE_CLOSE_REPORT"
 sed 's/^adopt=0$/adopt=1/' "$TRENT_REPORT/context.txt" >"$BAD_CONTEXT_MODE_CLOSE_REPORT/context.txt"

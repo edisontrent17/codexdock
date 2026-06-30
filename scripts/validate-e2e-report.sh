@@ -268,6 +268,10 @@ require_result_cleanup_consistent() {
       exit 2
       ;;
   esac
+  if [ "$cleanup_exit_code" -ne 0 ]; then
+    echo "remote E2E report result cleanup_exit_code must be 0 when cleanup_attempted=yes: $cleanup_exit_code" >&2
+    exit 2
+  fi
 }
 
 for result_field in status exit_code network machine session; do
