@@ -96,9 +96,20 @@ require_command_words() {
 
 require_build_artifact() {
   if grep -F "build.sh" "$REPORT_DIR/build.cmd" >/dev/null; then
+    context_bin=$(context_field codexdock_bin)
+    if [ -n "$context_bin" ]; then
+      echo "remote E2E report context codexdock_bin must be blank for source build reports" >&2
+      exit 2
+    fi
     return 0
   fi
+  context_bin=$(context_field codexdock_bin)
+  if [ -z "$context_bin" ]; then
+    echo "remote E2E report context codexdock_bin cannot be blank for binary build reports" >&2
+    exit 2
+  fi
   require_command_text build "CODEXDOCK_BIN="
+  require_command_text build "CODEXDOCK_BIN=$context_bin"
   require_command_token build version
   require_contains "$REPORT_DIR/build.out" "codexdock"
 }
@@ -333,7 +344,8 @@ for context_field in \
   ssh_authorized_key_set \
   ssh_authorized_key_file_set \
   require_scp \
-  target_arch
+  target_arch \
+  codexdock_bin
 do
   require_context_field_once "$context_field"
 done

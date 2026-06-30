@@ -767,6 +767,7 @@ ssh_authorized_key_set=no
 ssh_authorized_key_file_set=no
 require_scp=0
 target_arch=amd64
+codexdock_bin=
 EOF
 for step in build init prepare doctor doctor_all start sessions sessions_all send logs stop sessions_after_stop; do
   printf '%s command\n' "$step" >"$TRENT_REPORT/$step.cmd"
@@ -844,6 +845,7 @@ No tmux sessions found on homepc.
 EOF
 BIN_BUILD_REPORT="$WORK/bin-build-report"
 cp -R "$TRENT_REPORT" "$BIN_BUILD_REPORT"
+sed 's|^codexdock_bin=$|codexdock_bin=/usr/local/bin/codexdock|' "$TRENT_REPORT/context.txt" >"$BIN_BUILD_REPORT/context.txt"
 cat >"$BIN_BUILD_REPORT/build.cmd" <<'EOF'
 env CODEXDOCK_BIN=/usr/local/bin/codexdock /usr/local/bin/codexdock version
 EOF
@@ -854,6 +856,23 @@ built 1970-01-01T00:00:00Z
 EOF
 "$ROOT/scripts/validate-e2e-report.sh" --full "$BIN_BUILD_REPORT" >"$WORK/bin-build-validate.out"
 grep -F "remote E2E full report ok" "$WORK/bin-build-validate.out" >/dev/null
+BAD_CONTEXT_BIN_FIELD_CLOSE_REPORT="$WORK/bad-context-bin-field-close-report"
+cp -R "$TRENT_REPORT" "$BAD_CONTEXT_BIN_FIELD_CLOSE_REPORT"
+sed '/^codexdock_bin=/d' "$TRENT_REPORT/context.txt" >"$BAD_CONTEXT_BIN_FIELD_CLOSE_REPORT/context.txt"
+if "$ROOT/scripts/validate-e2e-report.sh" --full "$BAD_CONTEXT_BIN_FIELD_CLOSE_REPORT" >"$WORK/trent-close-bad-context-bin-field.out" 2>&1; then
+  echo "expected remote E2E validator to reject reports without codexdock_bin context" >&2
+  exit 1
+fi
+grep -F "remote E2E report artifact did not contain expected text: context.txt" "$WORK/trent-close-bad-context-bin-field.out" >/dev/null
+
+BAD_BIN_CONTEXT_REPORT="$WORK/bad-bin-context-report"
+cp -R "$BIN_BUILD_REPORT" "$BAD_BIN_CONTEXT_REPORT"
+sed 's|^codexdock_bin=/usr/local/bin/codexdock$|codexdock_bin=|' "$BIN_BUILD_REPORT/context.txt" >"$BAD_BIN_CONTEXT_REPORT/context.txt"
+if "$ROOT/scripts/validate-e2e-report.sh" --full "$BAD_BIN_CONTEXT_REPORT" >"$WORK/bad-bin-context-validate.out" 2>&1; then
+  echo "expected remote E2E validator to reject binary build reports without codexdock_bin context value" >&2
+  exit 1
+fi
+grep -F "remote E2E report context codexdock_bin cannot be blank for binary build reports" "$WORK/bad-bin-context-validate.out" >/dev/null
 CODEXDOCK_FAKE_CURL_LOG="$FAKE_CURL_LOG" \
   CODEXDOCK_FAKE_CURL_BODY="$FAKE_CURL_BODY" \
   CODEXDOCK_TRENT_TOKEN=test-token \
