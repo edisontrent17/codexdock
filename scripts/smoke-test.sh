@@ -242,11 +242,13 @@ grep -F "remote e2e runbook written" "$WORK/e2e-runbook.out" >/dev/null
 test -x "$RUNBOOK_DIR/mac-preflight.sh"
 test -x "$RUNBOOK_DIR/mac-run.sh"
 test -x "$RUNBOOK_DIR/mac-stage-wsl-codexdock.sh"
+test -x "$RUNBOOK_DIR/wsl-install-codexdock.sh"
 test -x "$RUNBOOK_DIR/wsl-prepare.sh"
 test -x "$RUNBOOK_DIR/finalize-trent.sh"
 sh -n "$RUNBOOK_DIR/mac-preflight.sh"
 sh -n "$RUNBOOK_DIR/mac-run.sh"
 sh -n "$RUNBOOK_DIR/mac-stage-wsl-codexdock.sh"
+sh -n "$RUNBOOK_DIR/wsl-install-codexdock.sh"
 sh -n "$RUNBOOK_DIR/wsl-prepare.sh"
 sh -n "$RUNBOOK_DIR/finalize-trent.sh"
 grep -F "CODEXDOCK_HOST='100.64.0.2'" "$RUNBOOK_DIR/mac-run.sh" >/dev/null
@@ -262,6 +264,9 @@ grep -F "GOARCH='amd64'" "$RUNBOOK_DIR/mac-stage-wsl-codexdock.sh" >/dev/null
 grep -F "OUT='$RUNBOOK_DIR/codexdock-linux-amd64'" "$RUNBOOK_DIR/mac-stage-wsl-codexdock.sh" >/dev/null
 grep -F "scp -P '22' '$RUNBOOK_DIR/codexdock-linux-amd64' 'manoj@100.64.0.2:/tmp/codexdock'" "$RUNBOOK_DIR/mac-stage-wsl-codexdock.sh" >/dev/null
 grep -F "ssh -p '22' 'manoj@100.64.0.2'" "$RUNBOOK_DIR/mac-stage-wsl-codexdock.sh" >/dev/null
+grep -F "OUT=\"\$HOME/.local/bin/codexdock\"" "$RUNBOOK_DIR/wsl-install-codexdock.sh" >/dev/null
+grep -F "./scripts/build.sh" "$RUNBOOK_DIR/wsl-install-codexdock.sh" >/dev/null
+grep -F '"$HOME/.local/bin/codexdock" version' "$RUNBOOK_DIR/wsl-install-codexdock.sh" >/dev/null
 grep -F "./scripts/e2e-remote.sh --preflight" "$RUNBOOK_DIR/mac-preflight.sh" >/dev/null
 grep -F "./scripts/e2e-remote.sh" "$RUNBOOK_DIR/mac-run.sh" >/dev/null
 grep -F 'CODEXDOCK_BIN=${CODEXDOCK_BIN:-"$HOME/.local/bin/codexdock"}' "$RUNBOOK_DIR/wsl-prepare.sh" >/dev/null
@@ -273,6 +278,8 @@ grep -F 'set +a' "$RUNBOOK_DIR/finalize-trent.sh" >/dev/null
 grep -F "./scripts/trent-finalize-e2e.sh '$RUNBOOK_DIR'" "$RUNBOOK_DIR/finalize-trent.sh" >/dev/null
 grep -F "Run on the Mac" "$RUNBOOK_DIR/runbook.txt" >/dev/null
 grep -F "Run inside WSL" "$RUNBOOK_DIR/runbook.txt" >/dev/null
+grep -F "If SSH into WSL is not ready yet, install CodexDock from inside WSL first:" "$RUNBOOK_DIR/runbook.txt" >/dev/null
+grep -F "$RUNBOOK_DIR/wsl-install-codexdock.sh" "$RUNBOOK_DIR/runbook.txt" >/dev/null
 grep -F "Install the latest CodexDock binary into WSL from the Mac" "$RUNBOOK_DIR/runbook.txt" >/dev/null
 grep -F "Source TrentPlatform bootstrap env" "$RUNBOOK_DIR/runbook.txt" >/dev/null
 

@@ -253,12 +253,17 @@ CODEXDOCK_REPORT_DIR=.dev-logs/e2e-remote/physical-run \
 ```
 
 The runbook mode does not run SSH or contact TrentPlatform. It writes
-`mac-stage-wsl-codexdock.sh`, `mac-preflight.sh`, `mac-run.sh`,
-`wsl-prepare.sh`, `finalize-trent.sh`, and `runbook.txt` into the report
-directory. Use it to install the current Linux CodexDock binary into WSL,
-prepare WSL, run the Mac preflight, execute the full remote validation, and
-intentionally finalize the successful report in TrentPlatform. It refuses to
-write runnable scripts until the required target values are present:
+`wsl-install-codexdock.sh`, `mac-stage-wsl-codexdock.sh`,
+`mac-preflight.sh`, `mac-run.sh`, `wsl-prepare.sh`, `finalize-trent.sh`, and
+`runbook.txt` into the report directory. Use the WSL-local install script first
+when SSH into WSL is not ready yet; it builds CodexDock inside WSL into
+`$HOME/.local/bin/codexdock` so `wsl-prepare.sh` can start SSH, install tmux,
+create the workspace, and install managed internals before Mac-side `scp` is
+possible. Once SSH is reachable, use the Mac staging script to install the
+current Linux CodexDock binary from the Mac, run the Mac preflight, execute the
+full remote validation, and intentionally finalize the successful report in
+TrentPlatform. It refuses to write runnable scripts until the required target
+values are present:
 `CODEXDOCK_HOST` and `CODEXDOCK_USER` for direct mode, or `CODEXDOCK_USER` for
 `CODEXDOCK_ADOPT=1`; `CODEXDOCK_SSH_PORT` and `CODEXDOCK_LOG_LINES` must be
 positive integers, flag values must be `0` or `1`, and target host/user values

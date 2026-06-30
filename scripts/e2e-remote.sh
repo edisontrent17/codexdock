@@ -578,6 +578,7 @@ write_runbook() {
   write_preflight_context
 
   wsl_prepare="$REPORT_DIR/wsl-prepare.sh"
+  wsl_install="$REPORT_DIR/wsl-install-codexdock.sh"
   mac_stage="$REPORT_DIR/mac-stage-wsl-codexdock.sh"
   mac_preflight="$REPORT_DIR/mac-preflight.sh"
   mac_run="$REPORT_DIR/mac-run.sh"
@@ -592,6 +593,21 @@ write_runbook() {
 
   write_run_env "$mac_preflight" preflight 1
   write_run_env "$mac_run" run 0
+
+  {
+    printf '#!/usr/bin/env sh\n'
+    printf 'set -eu\n'
+    printf 'cd %s\n' "$(quote_sh "$ROOT")"
+    printf 'mkdir -p "$HOME/.local/bin"\n'
+    printf 'env \\\n'
+    printf '  GOCACHE=%s \\\n' "$(quote_sh "/tmp/codexdock-gocache")"
+    printf '  GOMODCACHE=%s \\\n' "$(quote_sh "/tmp/codexdock-gomodcache")"
+    printf '  OUT="$HOME/.local/bin/codexdock" \\\n'
+    printf '  ./scripts/build.sh\n'
+    printf 'chmod 755 "$HOME/.local/bin/codexdock"\n'
+    printf '"$HOME/.local/bin/codexdock" version\n'
+  } >"$wsl_install"
+  chmod +x "$wsl_install"
 
   {
     printf '#!/usr/bin/env sh\n'
@@ -638,9 +654,11 @@ write_runbook() {
   {
     printf 'Remote E2E physical validation runbook\n\n'
     printf 'target architecture: %s\n\n' "$TARGET_ARCH"
+    printf 'If SSH into WSL is not ready yet, install CodexDock from inside WSL first:\n'
+    printf '  %s\n\n' "$wsl_install"
     printf 'Install the latest CodexDock binary into WSL from the Mac:\n'
     printf '  %s\n\n' "$mac_stage"
-    printf 'Run inside WSL on the Codex host first:\n'
+    printf 'Run inside WSL on the Codex host to prepare SSH, tmux, workspace, and managed internals:\n'
     printf '  %s\n\n' "$wsl_prepare"
     printf 'Run on the Mac to preflight local inputs:\n'
     printf '  %s\n\n' "$mac_preflight"
