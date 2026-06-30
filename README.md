@@ -340,7 +340,8 @@ metadata and data endpoints, and requires a bearer token with
 the created TrentPlatform records; export those values before recording or
 finalizing E2E reports. Bootstrap fields that later receive records are
 created with writable field types used by the current TrentPlatform
-record-storage path.
+record-storage path, with explicit text lengths for report content and scope
+summaries.
 
 Publish a validation report to TrentPlatform after a preflight or remote run:
 

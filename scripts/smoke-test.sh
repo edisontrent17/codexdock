@@ -805,6 +805,8 @@ grep -F "CODEXDOCK_TRENT_PROJECT=111764" "$WORK/trent-bootstrap.out" >/dev/null
 grep -F "CODEXDOCK_TRENT_ROADMAP_IDS='111765 111766 111767 111768 111769 111770 111771 111772 111773'" "$WORK/trent-bootstrap.out" >/dev/null
 jq -e 'select(.name == "Content" and .fieldType == "text")' "$FAKE_CURL_PAYLOADS" >/dev/null
 jq -e 'select(.name == "Scope" and .fieldType == "text")' "$FAKE_CURL_PAYLOADS" >/dev/null
+jq -e 'select(.name == "Content" and .fieldType == "text" and .textLength == 65535)' "$FAKE_CURL_PAYLOADS" >/dev/null
+jq -e 'select(.name == "Scope" and .fieldType == "text" and .textLength == 4096)' "$FAKE_CURL_PAYLOADS" >/dev/null
 
 TRENT_REPORT="$WORK/trent-report"
 mkdir -p "$TRENT_REPORT"
