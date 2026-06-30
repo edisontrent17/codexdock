@@ -1156,6 +1156,25 @@ func TestMachinesCommandShowsLiveTailnetStatus(t *testing.T) {
 	require.Contains(t, out.String(), "homepc\t100.64.0.2\tmanoj\tcodex-host\tonline")
 }
 
+func TestMachinesCommandMatchesLiveTailnetStatusByStoredIP(t *testing.T) {
+	path := seedConfig(t)
+	var out bytes.Buffer
+	tailnetClient := fakeTailnet{
+		installed: true,
+		status: tailnet.Status{
+			Peers: map[string]tailnet.Peer{
+				"windows-wsl": {HostName: "windows-wsl", IP: "100.64.0.2", Online: true},
+			},
+		},
+	}
+	root := cli.New(cli.Options{ConfigPath: path, Tailnet: tailnetClient, Out: &out, Err: io.Discard})
+
+	root.SetArgs([]string{"machines", "personal"})
+	require.NoError(t, root.Execute())
+
+	require.Contains(t, out.String(), "homepc\t100.64.0.2\tmanoj\tcodex-host\tonline")
+}
+
 func TestMachinesCommandShowsUnknownWhenTailnetUnavailable(t *testing.T) {
 	path := seedAliasConfig(t)
 	var out bytes.Buffer

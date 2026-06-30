@@ -96,15 +96,17 @@ commands.
 `register` stores a user-chosen machine alias. When the private network client
 is available, CodexDock records the current machine's private-network IP.
 `machines` shows the registered machines with live private-network status when
-available: `online`, `offline`, or `unknown`. Commands that create or refresh
-machine profiles reject non-positive `--ssh-port` values before writing config
-or contacting managed network internals. They also validate `--session` as a
-tmux session name, limited to letters, numbers, underscores, and hyphens, and
-require non-empty `--agent` and `--workspace` values. Surrounding whitespace on
-machine profile fields such as host, SSH user, role, session, agent, and
-workspace is trimmed before validation and storage. Machine aliases created by
-`init`, `register`, and `adopt` cannot be blank; quoted surrounding whitespace
-is trimmed before storing, lookup, and generated follow-up command guidance.
+available: `online`, `offline`, or `unknown`. Live status can match either the
+registered alias, DNS name, or stored private-network IP. Commands that create
+or refresh machine profiles reject non-positive `--ssh-port` values before
+writing config or contacting managed network internals. They also validate
+`--session` as a tmux session name, limited to letters, numbers, underscores,
+and hyphens, and require non-empty `--agent` and `--workspace` values.
+Surrounding whitespace on machine profile fields such as host, SSH user, role,
+session, agent, and workspace is trimmed before validation and storage. Machine
+aliases created by `init`, `register`, and `adopt` cannot be blank; quoted
+surrounding whitespace is trimmed before storing, lookup, and generated
+follow-up command guidance.
 
 `devices --all` also shows visible private-network peers that are not yet
 registered, with an `adopt` hint for bringing them into the current network

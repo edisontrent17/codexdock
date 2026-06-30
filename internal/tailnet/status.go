@@ -158,6 +158,9 @@ func matchesPeer(peer Peer, name string) bool {
 	if peer.DNSName == name {
 		return true
 	}
+	if peer.IP == name {
+		return true
+	}
 	dnsShort := strings.Split(peer.DNSName, ".")[0]
 	return dnsShort == name
 }
