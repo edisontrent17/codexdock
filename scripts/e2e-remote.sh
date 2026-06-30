@@ -579,6 +579,7 @@ write_runbook() {
 
   wsl_prepare="$REPORT_DIR/wsl-prepare.sh"
   wsl_install="$REPORT_DIR/wsl-install-codexdock.sh"
+  wsl_preflight="$REPORT_DIR/wsl-preflight.sh"
   mac_stage="$REPORT_DIR/mac-stage-wsl-codexdock.sh"
   mac_preflight="$REPORT_DIR/mac-preflight.sh"
   mac_run="$REPORT_DIR/mac-run.sh"
@@ -608,6 +609,77 @@ write_runbook() {
     printf '"$HOME/.local/bin/codexdock" version\n'
   } >"$wsl_install"
   chmod +x "$wsl_install"
+
+  {
+    printf '#!/usr/bin/env sh\n'
+    printf 'set -eu\n'
+    printf 'cd %s\n' "$(quote_sh "$ROOT")"
+    printf 'REPORT=%s\n' "$(quote_sh "$REPORT_DIR/wsl_preflight.txt")"
+    printf 'WORKSPACE=%s\n' "$(quote_sh "$WORKSPACE")"
+    printf 'ADOPT=%s\n' "$(quote_sh "$ADOPT")"
+    printf 'command_status() {\n'
+    printf '  if command -v "$1" >/dev/null 2>&1; then printf yes; else printf no; fi\n'
+    printf '}\n'
+    printf 'codexdock_bin_status() {\n'
+    printf '  bin=${CODEXDOCK_BIN:-"$HOME/.local/bin/codexdock"}\n'
+    printf '  if [ -x "$bin" ]; then printf executable; elif command -v codexdock >/dev/null 2>&1; then printf path; else printf missing; fi\n'
+    printf '}\n'
+    printf 'workspace_real_path() {\n'
+    printf '  case "$WORKSPACE" in\n'
+    printf '    "~") printf "%%s" "$HOME" ;;\n'
+    printf '    "~/"*) printf "%%s/%%s" "$HOME" "${WORKSPACE#\\~/}" ;;\n'
+    printf '    *) printf "%%s" "$WORKSPACE" ;;\n'
+    printf '  esac\n'
+    printf '}\n'
+    printf 'workspace_status() {\n'
+    printf '  path=$(workspace_real_path)\n'
+    printf '  if [ -d "$path" ]; then printf yes; else printf no; fi\n'
+    printf '}\n'
+    printf 'ssh_listener_status() {\n'
+    printf '  if ! command -v ss >/dev/null 2>&1; then printf unknown; return; fi\n'
+    printf '  if ss -ltn 2>/dev/null | awk '"'"'NR > 1 {print $4}'"'"' | grep -Eq '"'"'(^|:)22$'"'"'; then printf yes; else printf no; fi\n'
+    printf '}\n'
+    printf 'private_network_client=$(command_status tailscale)\n'
+    printf 'ssh_command=$(command_status ssh)\n'
+    printf 'ssh_listener=$(ssh_listener_status)\n'
+    printf 'tmux_command=$(command_status tmux)\n'
+    printf 'codex_command=$(command_status codex)\n'
+    printf 'workspace_exists=$(workspace_status)\n'
+    printf 'codexdock_bin=$(codexdock_bin_status)\n'
+    printf 'missing=none\n'
+    printf 'append_missing() { if [ "$missing" = none ]; then missing=$1; else missing="$missing $1"; fi; }\n'
+    printf 'if [ "$ADOPT" = "1" ] && [ "$private_network_client" != yes ]; then append_missing tailscale; fi\n'
+    printf 'if [ "$ssh_command" != yes ]; then append_missing ssh; fi\n'
+    printf 'if [ "$ssh_listener" != yes ]; then append_missing ssh_listener; fi\n'
+    printf 'if [ "$tmux_command" != yes ]; then append_missing tmux; fi\n'
+    printf 'if [ "$codex_command" != yes ]; then append_missing codex; fi\n'
+    printf 'if [ "$workspace_exists" != yes ]; then append_missing workspace; fi\n'
+    printf 'if [ "$codexdock_bin" = missing ]; then append_missing codexdock; fi\n'
+    printf 'status=success\n'
+    printf 'if [ "$missing" != none ]; then status=failure; fi\n'
+    printf 'cat >"$REPORT" <<EOF\n'
+    printf 'status=$status\n'
+    printf 'missing=$missing\n'
+    printf 'adopt=$ADOPT\n'
+    printf 'private_network_client=$private_network_client\n'
+    printf 'ssh_command=$ssh_command\n'
+    printf 'ssh_listener=$ssh_listener\n'
+    printf 'tmux=$tmux_command\n'
+    printf 'codex=$codex_command\n'
+    printf 'workspace=$WORKSPACE\n'
+    printf 'workspace_exists=$workspace_exists\n'
+    printf 'codexdock_bin=$codexdock_bin\n'
+    printf 'EOF\n'
+    printf 'if [ "$status" = success ]; then\n'
+    printf '  printf "wsl preflight ok\\n"\n'
+    printf 'else\n'
+    printf '  printf "wsl preflight failed\\n"\n'
+    printf 'fi\n'
+    printf 'printf "report: %%s\\n" "$REPORT"\n'
+    printf 'if [ "$status" = success ]; then exit 0; fi\n'
+    printf 'exit 2\n'
+  } >"$wsl_preflight"
+  chmod +x "$wsl_preflight"
 
   {
     printf '#!/usr/bin/env sh\n'
@@ -656,6 +728,8 @@ write_runbook() {
     printf 'target architecture: %s\n\n' "$TARGET_ARCH"
     printf 'If SSH into WSL is not ready yet, install CodexDock from inside WSL first:\n'
     printf '  %s\n\n' "$wsl_install"
+    printf 'Check WSL readiness without sudo:\n'
+    printf '  %s\n\n' "$wsl_preflight"
     printf 'Install the latest CodexDock binary into WSL from the Mac:\n'
     printf '  %s\n\n' "$mac_stage"
     printf 'Run inside WSL on the Codex host to prepare SSH, tmux, workspace, and managed internals:\n'

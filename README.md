@@ -259,7 +259,10 @@ The runbook mode does not run SSH or contact TrentPlatform. It writes
 when SSH into WSL is not ready yet; it builds CodexDock inside WSL into
 `$HOME/.local/bin/codexdock` so `wsl-prepare.sh` can start SSH, install tmux,
 create the workspace, and install managed internals before Mac-side `scp` is
-possible. Once SSH is reachable, use the Mac staging script to install the
+possible. `wsl-preflight.sh` checks WSL readiness without sudo and writes
+`wsl_preflight.txt`, so you can see whether `tailscale`, SSH, `tmux`, Codex,
+the workspace, and the local CodexDock binary are ready before and after
+preparation. Once SSH is reachable, use the Mac staging script to install the
 current Linux CodexDock binary from the Mac, run the Mac preflight, execute the
 full remote validation, and intentionally finalize the successful report in
 TrentPlatform. It refuses to write runnable scripts until the required target
