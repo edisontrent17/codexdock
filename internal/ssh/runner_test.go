@@ -16,6 +16,12 @@ func TestBuildSSHArgsIncludesPortAndTarget(t *testing.T) {
 	require.Equal(t, []string{"-p", "2222", "manoj@100.64.0.2"}, ssh.Args(target, false, ""))
 }
 
+func TestBuildSSHArgsOmitsUserPrefixWhenUserEmpty(t *testing.T) {
+	target := ssh.Target{Host: "windows-wsl", Port: 22}
+
+	require.Equal(t, []string{"-p", "22", "windows-wsl"}, ssh.Args(target, false, ""))
+}
+
 func TestBuildInteractiveSSHArgsIncludesTTYAndCommand(t *testing.T) {
 	target := ssh.Target{Host: "homepc", User: "manoj", Port: 22}
 

@@ -7,6 +7,7 @@ import (
 	"os"
 	"os/exec"
 	"strconv"
+	"strings"
 )
 
 type Target struct {
@@ -40,11 +41,19 @@ func Args(target Target, interactive bool, command string) []string {
 	if interactive {
 		args = append(args, "-t")
 	}
-	args = append(args, "-p", strconv.Itoa(port), fmt.Sprintf("%s@%s", target.User, target.Host))
+	args = append(args, "-p", strconv.Itoa(port), targetSpec(target))
 	if command != "" {
 		args = append(args, command)
 	}
 	return args
+}
+
+func targetSpec(target Target) string {
+	user := strings.TrimSpace(target.User)
+	if user == "" {
+		return target.Host
+	}
+	return fmt.Sprintf("%s@%s", user, target.Host)
 }
 
 func (r SystemRunner) Run(target Target, command string) (string, string, error) {
