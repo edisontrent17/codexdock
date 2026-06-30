@@ -1,0 +1,7 @@
+dist/
+.dev-logs/
+.agents/
+.codex/
+*.log
+codexdock-docs.zip
+codexdock-docs.zip:Zone.Identifier

@@ -1,0 +1,18 @@
+CodexDock is MIT licensed.
+
+CodexDock is designed to use Headscale and Tailscale as managed open-source
+implementation components for private networking. Those projects are not
+relicensed by CodexDock. When their source code, binaries, or releases are
+linked, bundled, vendored, or redistributed, their original BSD 3-Clause
+copyright notices and license texts must be preserved.
+
+Upstream projects:
+- Tailscale: https://github.com/tailscale/tailscale
+- Headscale: https://github.com/juanfont/headscale
+
+Release archives include THIRD_PARTY_NOTICES.md with the upstream BSD
+3-Clause notices for these managed implementation components.
+
+Public CodexDock commands must not expose these upstream component names as
+top-level product commands. They remain implementation details behind commands
+such as `create`, `register`, `machines`, `connect`, and `doctor`.

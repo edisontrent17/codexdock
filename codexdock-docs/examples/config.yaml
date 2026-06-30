@@ -1,0 +1,10 @@
+default_device: windows-wsl
+
+devices:
+  windows-wsl:
+    host: windows-wsl
+    ssh_user: lakshmi
+    ssh_port: 22
+    workspace: ~/code
+    session_name: codex
+    agent_command: codex
