@@ -320,6 +320,7 @@ func registerCommand(options Options) *cobra.Command {
 	var controlURL string
 	var join bool
 	var enrollmentKey string
+	var force bool
 	cmd := &cobra.Command{
 		Use:   "register <machine> [network]",
 		Short: "Register this machine with a friendly alias",
@@ -365,8 +366,8 @@ func registerCommand(options Options) *cobra.Command {
 				cfg.UpsertNetwork(config.Network{Name: networkName, Role: "client", ControlURL: normalizedControlURL})
 				network = cfg.Networks[networkName]
 			}
-			if _, exists := network.Machines[machine.Name]; exists {
-				return fmt.Errorf("machine %s already exists in network %s", machine.Name, networkName)
+			if _, exists := network.Machines[machine.Name]; exists && !force {
+				return fmt.Errorf("machine %s already exists in network %s; use --force to replace it", machine.Name, networkName)
 			}
 			if normalizedControlURL != "" {
 				if err := cfg.SetNetworkControlURL(networkName, normalizedControlURL); err != nil {
@@ -390,7 +391,7 @@ func registerCommand(options Options) *cobra.Command {
 			if machine.Host == "" {
 				machine.Host = discoverSelfHost(options.Tailnet, machine.Name)
 			}
-			if err := cfg.UpsertMachine(networkName, machine); err != nil {
+			if err := putMachine(&cfg, networkName, machine, force); err != nil {
 				return err
 			}
 			if err := store.Save(cfg); err != nil {
@@ -410,6 +411,7 @@ func registerCommand(options Options) *cobra.Command {
 	cmd.Flags().StringVar(&controlURL, "control-url", "", "CodexDock control URL for this network")
 	cmd.Flags().BoolVar(&join, "join", false, "join the CodexDock private network while registering")
 	cmd.Flags().StringVar(&enrollmentKey, "enrollment-key", "", "optional enrollment key for non-interactive joining")
+	cmd.Flags().BoolVar(&force, "force", false, "replace an existing machine profile")
 	return cmd
 }
 

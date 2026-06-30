@@ -27,6 +27,7 @@ codexdock invite --ttl 24h
 codexdock invite personal --ttl 24h
 codexdock register homepc --host 100.64.0.2 --ssh-user manoj
 codexdock register homepc personal --host 100.64.0.2 --ssh-user manoj
+codexdock register homepc personal --host 100.64.0.2 --ssh-user manoj --force
 codexdock register macbook personal --control-url https://control.example --ssh-user manoj
 codexdock register macbook personal --control-url https://control.example --join --enrollment-key <key>
 codexdock adopt homepc --ssh-user manoj
@@ -115,7 +116,10 @@ using the network control URL. On a clean second machine, `register --join
 machine. Join requires a nonblank control URL and passes the trimmed URL to the
 managed private-network client. `--enrollment-key` supports non-interactive
 joins without printing the key in normal output. When supplied, the enrollment
-key cannot be blank.
+key cannot be blank. `register --force` replaces an existing local machine
+profile after any requested join succeeds, which lets you safely refresh stale
+host, SSH, workspace, session, or agent settings without deleting the network
+profile.
 
 `adopt` adds a visible private-network peer to the current network profile so a
 second machine can start using `connect`, `doctor`, and Codex session commands

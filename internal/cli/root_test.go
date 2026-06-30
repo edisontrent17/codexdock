@@ -650,6 +650,75 @@ func TestRegisterJoinDoesNotJoinWhenMachineAlreadyExists(t *testing.T) {
 	require.Empty(t, joins)
 }
 
+func TestRegisterForceReplacesExistingMachineProfile(t *testing.T) {
+	path := seedConfig(t)
+	root := cli.New(cli.Options{ConfigPath: path, Tailnet: fakeTailnet{}, Out: io.Discard, Err: io.Discard})
+
+	root.SetArgs([]string{
+		"register", "homepc", "personal",
+		"--host", "100.64.0.44",
+		"--ssh-user", "lakshmi",
+		"--ssh-port", "2222",
+		"--workspace", "~/src/codexdock",
+		"--session", "codex",
+		"--agent", "codex --ask",
+		"--force",
+	})
+	require.NoError(t, root.Execute())
+
+	cfg, err := config.NewStore(path).Load()
+	require.NoError(t, err)
+	got, err := cfg.ResolveMachine("personal", "homepc")
+	require.NoError(t, err)
+	require.Equal(t, "100.64.0.44", got.Host)
+	require.Equal(t, "lakshmi", got.SSHUser)
+	require.Equal(t, 2222, got.SSHPort)
+	require.Equal(t, "~/src/codexdock", got.Workspace)
+	require.Equal(t, "codex", got.SessionName)
+	require.Equal(t, "codex --ask", got.AgentCommand)
+}
+
+func TestRegisterJoinForceRefreshesExistingMachineAfterJoin(t *testing.T) {
+	path := seedConfig(t)
+	joins := []tailnet.JoinOptions{}
+	tailnetClient := fakeTailnet{
+		installed:    true,
+		joinRecorder: &joins,
+		status: tailnet.Status{
+			Self: tailnet.Peer{HostName: "homepc", IP: "100.64.0.44", Online: true},
+		},
+	}
+	var out bytes.Buffer
+	root := cli.New(cli.Options{ConfigPath: path, Tailnet: tailnetClient, Out: &out, Err: io.Discard})
+
+	root.SetArgs([]string{
+		"register", "homepc", "personal",
+		"--control-url", "https://control.example",
+		"--ssh-user", "lakshmi",
+		"--join",
+		"--enrollment-key", "tskey-refresh",
+		"--force",
+	})
+	require.NoError(t, root.Execute())
+
+	require.Equal(t, []tailnet.JoinOptions{{
+		ControlURL: "https://control.example",
+		AuthKey:    "tskey-refresh",
+		Hostname:   "homepc",
+	}}, joins)
+	require.Contains(t, out.String(), "Joined homepc to personal")
+	require.Contains(t, out.String(), "Registered homepc in personal")
+	require.NotContains(t, out.String(), "tskey-refresh")
+
+	cfg, err := config.NewStore(path).Load()
+	require.NoError(t, err)
+	got, err := cfg.ResolveMachine("personal", "homepc")
+	require.NoError(t, err)
+	require.Equal(t, "100.64.0.44", got.Host)
+	require.Equal(t, "lakshmi", got.SSHUser)
+	require.Equal(t, "https://control.example", cfg.Networks["personal"].ControlURL)
+}
+
 func TestInviteIssuesEnrollmentKeyAndPrintsRegisterCommand(t *testing.T) {
 	path := filepath.Join(t.TempDir(), "config.yaml")
 	cfg := config.New()

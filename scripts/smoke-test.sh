@@ -116,6 +116,7 @@ grep -F -- "SSH authorized key file $BLANK_FIRST_LINE_KEY_FILE first line is emp
 HOME="$HOME_DIR" "$BIN" register --help >"$WORK/register-help.out"
 grep -F -- "--join" "$WORK/register-help.out" >/dev/null
 grep -F -- "--enrollment-key" "$WORK/register-help.out" >/dev/null
+grep -F -- "--force" "$WORK/register-help.out" >/dev/null
 
 if HOME="$HOME_DIR" "$BIN" register "   " personal --host 100.64.0.3 --ssh-user manoj >"$WORK/register-blank-machine.out" 2>"$WORK/register-blank-machine.err"; then
   echo "register accepted a blank machine name" >&2
