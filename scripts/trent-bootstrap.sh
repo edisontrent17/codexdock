@@ -57,7 +57,18 @@ post_json() {
   curl -sS --fail-with-body -X POST "$BASE_URL$path" \
     -H "Authorization: Bearer $TOKEN" \
     -H 'Content-Type: application/json' \
-    --data-binary @- >/dev/null
+    --data-binary @-
+}
+
+response_id() {
+  label=$1
+  response=$2
+  id=$(printf '%s' "$response" | jq -r '.id // empty')
+  if [ -z "$id" ]; then
+    echo "TrentPlatform response for $label did not include an id" >&2
+    exit 1
+  fi
+  printf '%s' "$id"
 }
 
 create_namespace() {
@@ -65,7 +76,7 @@ create_namespace() {
     --arg name "$NAMESPACE" \
     --arg label "$NAMESPACE" \
     '{name:$name,label:$label,kind:"custom"}' |
-    post_json "/api/v1/metadata/namespaces"
+    post_json "/api/v1/metadata/namespaces" >/dev/null
 }
 
 create_object() {
@@ -79,7 +90,7 @@ create_object() {
     --arg pluralLabel "$plural" \
     --arg description "$description" \
     '{name:$name,label:$label,pluralLabel:$pluralLabel,kind:"custom",description:$description}' |
-    post_json "/api/v1/metadata/namespaces/$NAMESPACE/objects"
+    post_json "/api/v1/metadata/namespaces/$NAMESPACE/objects" >/dev/null
 }
 
 create_field() {
@@ -103,7 +114,7 @@ create_field() {
       --arg relationshipName "${object}${name}" \
       --argjson required "$required_json" \
       '{name:$name,label:$label,fieldType:$fieldType,required:$required,referenceObject:$referenceObject,relationshipName:$relationshipName,relationshipDeleteBehavior:"restrict"}' |
-      post_json "/api/v1/metadata/namespaces/$NAMESPACE/objects/$object/fields"
+      post_json "/api/v1/metadata/namespaces/$NAMESPACE/objects/$object/fields" >/dev/null
     return
   fi
   jq -n \
@@ -112,14 +123,15 @@ create_field() {
     --arg fieldType "$field_type" \
     --argjson required "$required_json" \
     '{name:$name,label:$label,fieldType:$fieldType,required:$required}' |
-    post_json "/api/v1/metadata/namespaces/$NAMESPACE/objects/$object/fields"
+    post_json "/api/v1/metadata/namespaces/$NAMESPACE/objects/$object/fields" >/dev/null
 }
 
 create_project_record() {
-  jq -n \
+  response=$(jq -n \
     --arg title "$PROJECT_NAME" \
     '{name:$title,values:{Title:$title,Status:"active",Scope:"CodexDock roadmap and implementation system of record."}}' |
-    post_json "/api/v1/data/$NAMESPACE/Project"
+    post_json "/api/v1/data/$NAMESPACE/Project")
+  response_id "project record" "$response"
 }
 
 create_roadmap_record() {
@@ -132,6 +144,24 @@ create_roadmap_record() {
     --arg sortOrder "$sort_order" \
     '{name:$title,values:{Title:$title,Status:$status,SortOrder:$sortOrder}}' |
     post_json "/api/v1/data/$NAMESPACE/RoadmapItem"
+}
+
+create_roadmap_id() {
+  title=$1
+  status=$2
+  sort_order=$3
+  response=$(create_roadmap_record "$title" "$status" "$sort_order")
+  response_id "roadmap record $title" "$response"
+}
+
+append_id() {
+  existing=$1
+  id=$2
+  if [ -z "$existing" ]; then
+    printf '%s' "$id"
+  else
+    printf '%s %s' "$existing" "$id"
+  fi
 }
 
 create_namespace
@@ -155,15 +185,18 @@ create_field RoadmapItem Project Project reference false "$NAMESPACE.Project"
 create_field RoadmapItem Scope Scope long_text false
 create_field RoadmapItem SortOrder "Sort Order" number false
 
-create_project_record
-create_roadmap_record "Product model and command UX" done 1
-create_roadmap_record "TrentPlatform project system of record" active 2
-create_roadmap_record "CLI skeleton, local config, and first-time init" done 3
-create_roadmap_record "Managed OSS component integration" active 4
-create_roadmap_record "Machine registration and discovery" active 5
-create_roadmap_record "SSH connect workflow" active 6
-create_roadmap_record "Codex tmux workflow" active 7
-create_roadmap_record "Hardening, packaging, and smoke checks" active 8
-create_roadmap_record "Physical Mac-to-WSL E2E validation" pending 9
+PROJECT_ID=$(create_project_record)
+ROADMAP_IDS=
+ROADMAP_IDS=$(append_id "$ROADMAP_IDS" "$(create_roadmap_id "Product model and command UX" done 1)")
+ROADMAP_IDS=$(append_id "$ROADMAP_IDS" "$(create_roadmap_id "TrentPlatform project system of record" active 2)")
+ROADMAP_IDS=$(append_id "$ROADMAP_IDS" "$(create_roadmap_id "CLI skeleton, local config, and first-time init" done 3)")
+ROADMAP_IDS=$(append_id "$ROADMAP_IDS" "$(create_roadmap_id "Managed OSS component integration" active 4)")
+ROADMAP_IDS=$(append_id "$ROADMAP_IDS" "$(create_roadmap_id "Machine registration and discovery" active 5)")
+ROADMAP_IDS=$(append_id "$ROADMAP_IDS" "$(create_roadmap_id "SSH connect workflow" active 6)")
+ROADMAP_IDS=$(append_id "$ROADMAP_IDS" "$(create_roadmap_id "Codex tmux workflow" active 7)")
+ROADMAP_IDS=$(append_id "$ROADMAP_IDS" "$(create_roadmap_id "Hardening, packaging, and smoke checks" active 8)")
+ROADMAP_IDS=$(append_id "$ROADMAP_IDS" "$(create_roadmap_id "Physical Mac-to-WSL E2E validation" pending 9)")
 
 printf 'bootstrapped TrentPlatform CodexDock metadata\n'
+printf 'CODEXDOCK_TRENT_PROJECT=%s\n' "$PROJECT_ID"
+printf "CODEXDOCK_TRENT_ROADMAP_IDS='%s'\n" "$ROADMAP_IDS"

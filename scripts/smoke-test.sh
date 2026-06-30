@@ -724,16 +724,55 @@ cat >"$FAKE_BIN/curl" <<'EOF'
 #!/usr/bin/env sh
 set -eu
 printf 'curl %s\n' "$*" >>"$CODEXDOCK_FAKE_CURL_LOG"
+BODY=$(mktemp "${TMPDIR:-/tmp}/codexdock-fake-curl-body.XXXXXX")
+cleanup() {
+  rm -f "$BODY"
+}
+trap cleanup EXIT INT TERM
+url=
 while [ "$#" -gt 0 ]; do
+  case "$1" in
+    http://*|https://*) url=$1 ;;
+  esac
   if [ "$1" = "--data-binary" ]; then
     shift
     if [ "${1:-}" = "@-" ]; then
-      cat >"$CODEXDOCK_FAKE_CURL_BODY"
+      cat >"$BODY"
+      cp "$BODY" "$CODEXDOCK_FAKE_CURL_BODY"
     fi
   fi
   shift
 done
-printf '{"id":12345,"name":"Remote E2E Report: homepc success"}\n'
+title=
+if [ -s "$BODY" ]; then
+  title=$(jq -r '.values.Title // .name // empty' "$BODY" 2>/dev/null || printf '')
+fi
+case "$url" in
+  */data/CodexDock/Project)
+    jq -n -c --arg name "${title:-CodexDock}" '{id:111764,name:$name}'
+    ;;
+  */data/CodexDock/RoadmapItem)
+    case "$title" in
+      "Product model and command UX") id=111765 ;;
+      "TrentPlatform project system of record") id=111766 ;;
+      "CLI skeleton, local config, and first-time init") id=111767 ;;
+      "Managed OSS component integration") id=111768 ;;
+      "Machine registration and discovery") id=111769 ;;
+      "SSH connect workflow") id=111770 ;;
+      "Codex tmux workflow") id=111771 ;;
+      "Hardening, packaging, and smoke checks") id=111772 ;;
+      "Physical Mac-to-WSL E2E validation") id=111773 ;;
+      *) id=111799 ;;
+    esac
+    jq -n -c --argjson id "$id" --arg name "$title" '{id:$id,name:$name}'
+    ;;
+  */data/CodexDock/Artifact)
+    printf '{"id":12345,"name":"Remote E2E Report: homepc success"}\n'
+    ;;
+  *)
+    printf '{"id":9000,"name":"metadata"}\n'
+    ;;
+esac
 EOF
 chmod +x "$FAKE_BIN/curl"
 
@@ -755,6 +794,8 @@ grep -F "https://trent.example/api/v1/data/CodexDock/RoadmapItem" "$FAKE_CURL_LO
 grep -F "Authorization: Bearer test-token" "$FAKE_CURL_LOG" >/dev/null
 jq -e '.values.Title == "Physical Mac-to-WSL E2E validation"' "$FAKE_CURL_BODY" >/dev/null
 jq -e '.values.Status == "pending"' "$FAKE_CURL_BODY" >/dev/null
+grep -F "CODEXDOCK_TRENT_PROJECT=111764" "$WORK/trent-bootstrap.out" >/dev/null
+grep -F "CODEXDOCK_TRENT_ROADMAP_IDS='111765 111766 111767 111768 111769 111770 111771 111772 111773'" "$WORK/trent-bootstrap.out" >/dev/null
 
 TRENT_REPORT="$WORK/trent-report"
 mkdir -p "$TRENT_REPORT"

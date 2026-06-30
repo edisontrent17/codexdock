@@ -335,7 +335,10 @@ This creates the `CodexDock` namespace, `Project`, `Artifact`, and
 `RoadmapItem` objects, a CodexDock project record, and starter roadmap rows for
 the implementation scope. The script uses the TrentPlatform A2A-documented
 metadata and data endpoints, and requires a bearer token with
-`metadata:write` and `data:write` access.
+`metadata:write` and `data:write` access. It prints reusable
+`CODEXDOCK_TRENT_PROJECT` and `CODEXDOCK_TRENT_ROADMAP_IDS` assignments from
+the created TrentPlatform records; export those values before recording or
+finalizing E2E reports.
 
 Publish a validation report to TrentPlatform after a preflight or remote run:
 
