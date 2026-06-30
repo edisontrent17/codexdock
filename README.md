@@ -175,13 +175,15 @@ any machine failed. `start`, `send`, and `stop` print confirmations after the
 remote tmux command succeeds. Before starting a session, `start` checks SSH connectivity,
 remote `tmux`, the configured agent command, and the workspace so setup
 problems fail before tmux is launched; if the session is already running, it
-reports that state instead of claiming a new launch. `attach` checks that the
-configured tmux session exists before opening interactive SSH and points back
-to `start` when needed. `send` rejects empty prompts, checks that the session
-exists before injecting text, and warns on very long prompts. `logs` checks
-that the session exists before capturing recent output, and `--lines` must be
-positive. `stop` checks that the session exists before killing it, warns before
-killing a running session, and requires either `--yes` or `--force`.
+reports that state instead of claiming a new launch. Workspaces written as
+`~/...` are expanded against the remote SSH user's `$HOME` before tmux starts
+Codex. `attach` checks that the configured tmux session exists before opening
+interactive SSH and points back to `start` when needed. `send` rejects empty
+prompts, checks that the session exists before injecting text, and warns on
+very long prompts. `logs` checks that the session exists before capturing
+recent output, and `--lines` must be positive. `stop` checks that the session
+exists before killing it, warns before killing a running session, and requires
+either `--yes` or `--force`.
 
 ## Development
 

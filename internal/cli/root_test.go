@@ -1976,7 +1976,7 @@ func TestTopLevelStartUsesCurrentNetwork(t *testing.T) {
 		"command -v codex",
 		"test -d $HOME/code",
 		"tmux has-session -t codex",
-		"tmux has-session -t codex 2>/dev/null || tmux new-session -d -s codex -c '~/code' 'codex'",
+		"tmux has-session -t codex 2>/dev/null || tmux new-session -d -s codex -c \"$HOME\"/'code' 'codex'",
 	}, runner.Commands)
 	require.Equal(t, ssh.Target{Host: "100.64.0.2", User: "manoj", Port: 22}, runner.Targets[0])
 	require.Contains(t, out.String(), "Started Codex session 'codex' on homepc.")
@@ -2078,7 +2078,7 @@ func TestTopLevelStartFailsClearlyWhenAgentMissing(t *testing.T) {
 	err := root.Execute()
 
 	require.ErrorContains(t, err, "codex not found on homepc")
-	require.NotContains(t, runner.Commands, "tmux has-session -t codex 2>/dev/null || tmux new-session -d -s codex -c '~/code' 'codex'")
+	require.NotContains(t, runner.Commands, "tmux has-session -t codex 2>/dev/null || tmux new-session -d -s codex -c \"$HOME\"/'code' 'codex'")
 }
 
 func TestTopLevelStartFailsClearlyWhenWorkspaceMissing(t *testing.T) {
@@ -2094,7 +2094,7 @@ func TestTopLevelStartFailsClearlyWhenWorkspaceMissing(t *testing.T) {
 	err := root.Execute()
 
 	require.ErrorContains(t, err, "workspace ~/code not found on homepc")
-	require.NotContains(t, runner.Commands, "tmux has-session -t codex 2>/dev/null || tmux new-session -d -s codex -c '~/code' 'codex'")
+	require.NotContains(t, runner.Commands, "tmux has-session -t codex 2>/dev/null || tmux new-session -d -s codex -c \"$HOME\"/'code' 'codex'")
 }
 
 func TestTopLevelAttachChecksSessionBeforeInteractiveSSH(t *testing.T) {

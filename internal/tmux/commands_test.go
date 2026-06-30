@@ -18,7 +18,14 @@ func TestStartSessionCommandIsIdempotentAndQuoted(t *testing.T) {
 	got, err := tmux.StartSessionCommand("codex", "~/code with space", "codex --ask 'now'")
 
 	require.NoError(t, err)
-	require.Equal(t, "tmux has-session -t codex 2>/dev/null || tmux new-session -d -s codex -c '~/code with space' 'codex --ask '\"'\"'now'\"'\"''", got)
+	require.Equal(t, "tmux has-session -t codex 2>/dev/null || tmux new-session -d -s codex -c \"$HOME\"/'code with space' 'codex --ask '\"'\"'now'\"'\"''", got)
+}
+
+func TestStartSessionCommandExpandsHomeWorkspace(t *testing.T) {
+	got, err := tmux.StartSessionCommand("codex", "~/code", "codex")
+
+	require.NoError(t, err)
+	require.Equal(t, "tmux has-session -t codex 2>/dev/null || tmux new-session -d -s codex -c \"$HOME\"/'code' 'codex'", got)
 }
 
 func TestHasSessionCommandValidatesName(t *testing.T) {

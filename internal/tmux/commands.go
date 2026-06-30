@@ -32,7 +32,7 @@ func StartSessionCommand(session, workspace, agentCommand string) (string, error
 		"tmux has-session -t %s 2>/dev/null || tmux new-session -d -s %s -c %s %s",
 		session,
 		session,
-		ShellQuote(workspace),
+		WorkspacePathArg(workspace),
 		ShellQuote(agentCommand),
 	), nil
 }
@@ -77,6 +77,23 @@ func ValidateSessionName(session string) error {
 
 func ShellQuote(value string) string {
 	return "'" + strings.ReplaceAll(value, "'", "'\"'\"'") + "'"
+}
+
+func WorkspacePathArg(workspace string) string {
+	workspace = strings.TrimSpace(workspace)
+	if workspace == "" {
+		workspace = "~/code"
+	}
+	if workspace == "~" {
+		return `"$HOME"`
+	}
+	if rest, ok := strings.CutPrefix(workspace, "~/"); ok {
+		if rest == "" {
+			return `"$HOME"`
+		}
+		return `"$HOME"/` + ShellQuote(rest)
+	}
+	return ShellQuote(workspace)
 }
 
 func ParseListSessions(output string) []Session {
