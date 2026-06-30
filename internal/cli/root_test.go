@@ -792,6 +792,37 @@ func TestInviteUsesCurrentNetworkWhenOmitted(t *testing.T) {
 	require.Contains(t, out.String(), "codexdock register <machine> personal --control-url https://control.example --join --enrollment-key tskey-auth")
 }
 
+func TestInviteRejectsBlankStoredControlURLBeforeIssuingKey(t *testing.T) {
+	path := filepath.Join(t.TempDir(), "config.yaml")
+	cfg := config.New()
+	cfg.UpsertNetwork(config.Network{Name: "personal", Role: "controller", ControlURL: "   "})
+	require.NoError(t, config.NewStore(path).Save(cfg))
+	issuer := &fakeControlIssuer{installed: true, invite: control.Invite{Key: "tskey-auth"}}
+	root := cli.New(cli.Options{ConfigPath: path, Control: issuer, Tailnet: fakeTailnet{}, Out: io.Discard, Err: io.Discard})
+
+	root.SetArgs([]string{"invite", "personal"})
+	err := root.Execute()
+
+	require.ErrorContains(t, err, "control URL is required to invite machines to personal")
+	require.Empty(t, issuer.options)
+}
+
+func TestInviteTrimsStoredControlURLInRegisterCommand(t *testing.T) {
+	path := filepath.Join(t.TempDir(), "config.yaml")
+	cfg := config.New()
+	cfg.UpsertNetwork(config.Network{Name: "personal", Role: "controller", ControlURL: "  https://control.example  "})
+	require.NoError(t, config.NewStore(path).Save(cfg))
+	issuer := &fakeControlIssuer{installed: true, invite: control.Invite{Key: "tskey-auth"}}
+	var out bytes.Buffer
+	root := cli.New(cli.Options{ConfigPath: path, Control: issuer, Tailnet: fakeTailnet{}, Out: &out, Err: io.Discard})
+
+	root.SetArgs([]string{"invite", "personal"})
+	require.NoError(t, root.Execute())
+
+	require.Contains(t, out.String(), "codexdock register <machine> personal --control-url https://control.example --join --enrollment-key tskey-auth")
+	require.NotContains(t, out.String(), "--control-url   https://control.example")
+}
+
 func TestRegisterUsesTailnetSelfIPWhenHostIsOmitted(t *testing.T) {
 	path := filepath.Join(t.TempDir(), "config.yaml")
 	tailnetClient := fakeTailnet{

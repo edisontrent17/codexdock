@@ -110,7 +110,8 @@ func inviteCommand(options Options) *cobra.Command {
 			if !ok {
 				return fmt.Errorf("network %s not found", networkName)
 			}
-			if network.ControlURL == "" {
+			controlURL := strings.TrimSpace(network.ControlURL)
+			if controlURL == "" {
 				return fmt.Errorf("control URL is required to invite machines to %s; run codexdock create %s --control-url <url> --force", networkName, networkName)
 			}
 			if !options.Control.Installed() {
@@ -129,7 +130,7 @@ func inviteCommand(options Options) *cobra.Command {
 				return fmt.Errorf("control server returned an empty enrollment key")
 			}
 			_, _ = fmt.Fprintf(cmd.OutOrStdout(), "Enrollment key for %s:\n  %s\n", networkName, invite.Key)
-			_, _ = fmt.Fprintf(cmd.OutOrStdout(), "Register another machine:\n  codexdock register <machine> %s --control-url %s --join --enrollment-key %s\n", networkName, network.ControlURL, invite.Key)
+			_, _ = fmt.Fprintf(cmd.OutOrStdout(), "Register another machine:\n  codexdock register <machine> %s --control-url %s --join --enrollment-key %s\n", networkName, controlURL, invite.Key)
 			return nil
 		},
 	}
