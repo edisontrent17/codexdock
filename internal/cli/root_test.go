@@ -1224,6 +1224,40 @@ func TestDevicesAllShowsVisibleUnregisteredPeers(t *testing.T) {
 	require.Contains(t, out.String(), "codexdock adopt homepc")
 }
 
+func TestDevicesAllDoesNotShowRegisteredPeerUnderDifferentAlias(t *testing.T) {
+	path := filepath.Join(t.TempDir(), "config.yaml")
+	cfg := config.New()
+	cfg.UpsertNetwork(config.Network{Name: "personal"})
+	require.NoError(t, cfg.UpsertMachine("personal", config.Machine{
+		Name:         "windows-wsl",
+		Host:         "100.64.0.2",
+		SSHUser:      "manoj",
+		SSHPort:      22,
+		Role:         "codex-host",
+		SessionName:  "codex",
+		AgentCommand: "codex",
+		Workspace:    "~/code",
+	}))
+	require.NoError(t, config.NewStore(path).Save(cfg))
+	var out bytes.Buffer
+	tailnetClient := fakeTailnet{
+		installed: true,
+		status: tailnet.Status{
+			Peers: map[string]tailnet.Peer{
+				"homepc": {HostName: "homepc", IP: "100.64.0.2", Online: true},
+			},
+		},
+	}
+	root := cli.New(cli.Options{ConfigPath: path, Tailnet: tailnetClient, Out: &out, Err: io.Discard})
+
+	root.SetArgs([]string{"devices", "--all"})
+	require.NoError(t, root.Execute())
+
+	require.Contains(t, out.String(), "windows-wsl\t100.64.0.2\tmanoj\tcodex-host\tonline")
+	require.NotContains(t, out.String(), "homepc\t100.64.0.2\t-\tunregistered")
+	require.NotContains(t, out.String(), "codexdock adopt homepc")
+}
+
 func TestConnectUsesRegisteredMachineSSHMetadata(t *testing.T) {
 	path := seedConfig(t)
 	runner := &fakeRunner{}

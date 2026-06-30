@@ -110,7 +110,8 @@ follow-up command guidance.
 
 `devices --all` also shows visible private-network peers that are not yet
 registered, with an `adopt` hint for bringing them into the current network
-profile.
+profile. Peers already represented by a registered machine alias, stored host,
+DNS name, or private-network IP are not shown as adoptable duplicates.
 
 `register --join` asks the managed private-network client to join the network
 using the network control URL. On a clean second machine, `register --join

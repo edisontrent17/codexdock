@@ -643,7 +643,13 @@ func printMachines(options Options, out io.Writer, networkName string, all bool)
 	for _, name := range names {
 		machine := network.Machines[name]
 		registered[machine.Name] = true
+		if machine.Host != "" {
+			registered[machine.Host] = true
+		}
 		host, state := machineDisplayStatus(status, live, machine)
+		if live {
+			registerResolvedPeerIdentifiers(registered, status, machine)
+		}
 		_, _ = fmt.Fprintf(out, "%s\t%s\t%s\t%s\t%s\n", machine.Name, host, machine.SSHUser, machine.Role, state)
 	}
 	if all && live {
@@ -667,7 +673,7 @@ func visibleUnregisteredPeers(status tailnet.Status, registered map[string]bool)
 	byName := map[string]tailnet.Peer{}
 	add := func(peer tailnet.Peer) {
 		name := visiblePeerName(peer)
-		if name == "" || peer.IP == "" || registered[name] {
+		if name == "" || peer.IP == "" || peerAlreadyRegistered(peer, registered) {
 			return
 		}
 		byName[name] = peer
@@ -687,6 +693,27 @@ func visibleUnregisteredPeers(status tailnet.Status, registered map[string]bool)
 		peers = append(peers, byName[name])
 	}
 	return peers
+}
+
+func registerResolvedPeerIdentifiers(registered map[string]bool, status tailnet.Status, machine config.Machine) {
+	peer, ok := resolveMachinePeer(status, machine)
+	if !ok {
+		return
+	}
+	for _, value := range []string{visiblePeerName(peer), peer.HostName, peer.DNSName, peer.IP} {
+		if value != "" {
+			registered[value] = true
+		}
+	}
+}
+
+func peerAlreadyRegistered(peer tailnet.Peer, registered map[string]bool) bool {
+	for _, value := range []string{visiblePeerName(peer), peer.HostName, peer.DNSName, peer.IP} {
+		if value != "" && registered[value] {
+			return true
+		}
+	}
+	return false
 }
 
 func visiblePeerName(peer tailnet.Peer) string {
