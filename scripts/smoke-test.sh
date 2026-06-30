@@ -278,6 +278,7 @@ grep -F "WORKSPACE='~/code'" "$RUNBOOK_DIR/wsl-preflight.sh" >/dev/null
 grep -F "INSTALL='$RUNBOOK_DIR/wsl-install-codexdock.sh'" "$RUNBOOK_DIR/wsl-preflight.sh" >/dev/null
 grep -F "PREPARE_PLAN='$RUNBOOK_DIR/wsl-prepare-plan.sh'" "$RUNBOOK_DIR/wsl-preflight.sh" >/dev/null
 grep -F "PREPARE='$RUNBOOK_DIR/wsl-prepare.sh'" "$RUNBOOK_DIR/wsl-preflight.sh" >/dev/null
+grep -F 'run %s --yes' "$RUNBOOK_DIR/wsl-preflight.sh" >/dev/null
 grep -F 'printf "%s/%s" "$HOME" "${WORKSPACE#\~/}"' "$RUNBOOK_DIR/wsl-preflight.sh" >/dev/null
 grep -F '${WORKSPACE#\~/}' "$RUNBOOK_DIR/wsl-preflight.sh" >/dev/null
 grep -F 'workspace=$WORKSPACE' "$RUNBOOK_DIR/wsl-preflight.sh" >/dev/null
@@ -297,6 +298,9 @@ if grep -F -- "--repair --yes" "$RUNBOOK_DIR/wsl-prepare-plan.sh" >/dev/null; th
   exit 1
 fi
 grep -F "REPORT='$RUNBOOK_DIR/wsl_prepare.txt'" "$RUNBOOK_DIR/wsl-prepare.sh" >/dev/null
+grep -F 'CODEXDOCK_WSL_PREPARE_YES' "$RUNBOOK_DIR/wsl-prepare.sh" >/dev/null
+grep -F 'usage: $0 [--yes]' "$RUNBOOK_DIR/wsl-prepare.sh" >/dev/null
+grep -F 'refusing to run privileged WSL prepare without --yes' "$RUNBOOK_DIR/wsl-prepare.sh" >/dev/null
 grep -F 'printf "report: %s\n" "$REPORT"' "$RUNBOOK_DIR/wsl-prepare.sh" >/dev/null
 grep -F '"$CODEXDOCK_BIN" doctor --repair --yes --target-os linux --role codex-host --workspace' "$RUNBOOK_DIR/wsl-prepare.sh" >/dev/null
 grep -F 'CODEXDOCK_TRENT_ENV_FILE=${CODEXDOCK_TRENT_ENV_FILE:-.dev-logs/trent-codexdock.env}' "$RUNBOOK_DIR/finalize-trent.sh" >/dev/null
@@ -314,6 +318,8 @@ grep -F "The WSL preflight report records the next local action as next=." "$RUN
 grep -F "Inspect WSL prepare commands without running privileged steps:" "$RUNBOOK_DIR/runbook.txt" >/dev/null
 grep -F "$RUNBOOK_DIR/wsl-prepare-plan.sh" "$RUNBOOK_DIR/runbook.txt" >/dev/null
 grep -F "WSL prepare scripts write wsl_prepare_plan.txt and wsl_prepare.txt." "$RUNBOOK_DIR/runbook.txt" >/dev/null
+grep -F "The privileged WSL prepare script requires --yes or CODEXDOCK_WSL_PREPARE_YES=1." "$RUNBOOK_DIR/runbook.txt" >/dev/null
+grep -F "$RUNBOOK_DIR/wsl-prepare.sh --yes" "$RUNBOOK_DIR/runbook.txt" >/dev/null
 grep -F "Install the latest CodexDock binary into WSL from the Mac" "$RUNBOOK_DIR/runbook.txt" >/dev/null
 grep -F "Source TrentPlatform bootstrap env" "$RUNBOOK_DIR/runbook.txt" >/dev/null
 

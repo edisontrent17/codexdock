@@ -672,9 +672,9 @@ write_runbook() {
     printf '    *" codexdock "*) printf "run %%s, then rerun %%s" "$INSTALL" "$0"; return ;;\n'
     printf '  esac\n'
     printf '  case " $missing " in\n'
-    printf '    *" codex "*) printf "install and authenticate Codex CLI for this WSL user, run %%s to inspect remaining steps, run %%s if needed, then rerun %%s" "$PREPARE_PLAN" "$PREPARE" "$0"; return ;;\n'
+    printf '    *" codex "*) printf "install and authenticate Codex CLI for this WSL user, run %%s to inspect remaining steps, run %%s --yes if needed, then rerun %%s" "$PREPARE_PLAN" "$PREPARE" "$0"; return ;;\n'
     printf '  esac\n'
-    printf '  printf "run %%s to inspect, run %%s, then rerun %%s" "$PREPARE_PLAN" "$PREPARE" "$0"\n'
+    printf '  printf "run %%s to inspect, run %%s --yes, then rerun %%s" "$PREPARE_PLAN" "$PREPARE" "$0"\n'
     printf '}\n'
     printf 'next_action=$(next_action)\n'
     printf 'cat >"$REPORT" <<EOF\n'
@@ -742,6 +742,25 @@ write_runbook() {
     printf '#!/usr/bin/env sh\n'
     printf 'set -eu\n'
     printf 'REPORT=%s\n' "$(quote_sh "$REPORT_DIR/wsl_prepare.txt")"
+    printf 'PREPARE_PLAN=%s\n' "$(quote_sh "$wsl_prepare_plan")"
+    printf 'CONFIRMED=0\n'
+    printf 'if [ "${CODEXDOCK_WSL_PREPARE_YES:-}" = "1" ]; then\n'
+    printf '  CONFIRMED=1\n'
+    printf 'fi\n'
+    printf 'if [ "${1:-}" = "--yes" ]; then\n'
+    printf '  CONFIRMED=1\n'
+    printf '  shift\n'
+    printf 'fi\n'
+    printf 'if [ "$#" -ne 0 ]; then\n'
+    printf '  printf "usage: $0 [--yes]\\n" >&2\n'
+    printf '  exit 2\n'
+    printf 'fi\n'
+    printf 'if [ "$CONFIRMED" != "1" ]; then\n'
+    printf '  printf "refusing to run privileged WSL prepare without --yes or CODEXDOCK_WSL_PREPARE_YES=1\\n" >&2\n'
+    printf '  printf "inspect: %%s\\n" "$PREPARE_PLAN" >&2\n'
+    printf '  printf "run: %%s --yes\\n" "$0" >&2\n'
+    printf '  exit 2\n'
+    printf 'fi\n'
     printf 'CODEXDOCK_BIN=${CODEXDOCK_BIN:-"$HOME/.local/bin/codexdock"}\n'
     printf 'if [ ! -x "$CODEXDOCK_BIN" ]; then\n'
     printf '  CODEXDOCK_BIN=codexdock\n'
@@ -785,10 +804,11 @@ write_runbook() {
     printf 'Inspect WSL prepare commands without running privileged steps:\n'
     printf '  %s\n\n' "$wsl_prepare_plan"
     printf 'WSL prepare scripts write wsl_prepare_plan.txt and wsl_prepare.txt.\n\n'
+    printf 'The privileged WSL prepare script requires --yes or CODEXDOCK_WSL_PREPARE_YES=1.\n\n'
     printf 'Install the latest CodexDock binary into WSL from the Mac:\n'
     printf '  %s\n\n' "$mac_stage"
     printf 'Run inside WSL on the Codex host to prepare SSH, tmux, workspace, and managed internals:\n'
-    printf '  %s\n\n' "$wsl_prepare"
+    printf '  %s --yes\n\n' "$wsl_prepare"
     printf 'Run on the Mac to preflight local inputs:\n'
     printf '  %s\n\n' "$mac_preflight"
     printf 'Run on the Mac to execute the full validation:\n'
