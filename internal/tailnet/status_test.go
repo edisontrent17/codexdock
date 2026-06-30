@@ -61,6 +61,28 @@ func TestResolveFindsPeerByIP(t *testing.T) {
 	require.True(t, peer.Online)
 }
 
+func TestResolveMatchesHostAndDNSAliasesCaseInsensitively(t *testing.T) {
+	status, err := tailnet.ParseStatusJSON([]byte(`{
+		"Self": {"HostName": "MacBook", "TailscaleIPs": ["100.64.0.1"], "Online": true},
+		"Peer": {
+			"abc": {"HostName": "Windows-WSL", "DNSName": "Windows-WSL.Personal.TS.Net.", "TailscaleIPs": ["100.64.0.2"], "Online": true}
+		}
+	}`))
+	require.NoError(t, err)
+
+	self, ok := status.Resolve("macbook")
+	require.True(t, ok)
+	require.Equal(t, "100.64.0.1", self.IP)
+
+	peer, ok := status.Resolve("windows-wsl")
+	require.True(t, ok)
+	require.Equal(t, "100.64.0.2", peer.IP)
+
+	peer, ok = status.Resolve("windows-wsl.personal.ts.net")
+	require.True(t, ok)
+	require.Equal(t, "100.64.0.2", peer.IP)
+}
+
 func TestJoinArgsUseControlURLAuthKeyAndHostname(t *testing.T) {
 	args, err := tailnet.JoinArgs(tailnet.JoinOptions{
 		ControlURL: "https://control.example",

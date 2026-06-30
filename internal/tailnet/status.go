@@ -152,15 +152,15 @@ func normalizePeer(peer rawPeer) Peer {
 }
 
 func matchesPeer(peer Peer, name string) bool {
-	if peer.HostName == name {
+	if strings.EqualFold(peer.HostName, name) {
 		return true
 	}
-	if peer.DNSName == name {
+	if strings.EqualFold(peer.DNSName, name) {
 		return true
 	}
 	if peer.IP == name {
 		return true
 	}
 	dnsShort := strings.Split(peer.DNSName, ".")[0]
-	return dnsShort == name
+	return strings.EqualFold(dnsShort, name)
 }
