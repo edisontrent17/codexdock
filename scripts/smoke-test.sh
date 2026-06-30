@@ -736,6 +736,26 @@ done
 printf '{"id":12345,"name":"Remote E2E Report: homepc success"}\n'
 EOF
 chmod +x "$FAKE_BIN/curl"
+
+: >"$FAKE_CURL_LOG"
+CODEXDOCK_FAKE_CURL_LOG="$FAKE_CURL_LOG" \
+  CODEXDOCK_FAKE_CURL_BODY="$FAKE_CURL_BODY" \
+  CODEXDOCK_TRENT_TOKEN=test-token \
+  CODEXDOCK_TRENT_BASE_URL=https://trent.example \
+  PATH="$FAKE_BIN:$PATH" \
+  "$ROOT/scripts/trent-bootstrap.sh" >"$WORK/trent-bootstrap.out"
+grep -F "bootstrapped TrentPlatform CodexDock metadata" "$WORK/trent-bootstrap.out" >/dev/null
+grep -F "https://trent.example/api/v1/metadata/namespaces" "$FAKE_CURL_LOG" >/dev/null
+grep -F "https://trent.example/api/v1/metadata/namespaces/CodexDock/objects" "$FAKE_CURL_LOG" >/dev/null
+grep -F "https://trent.example/api/v1/metadata/namespaces/CodexDock/objects/Project/fields" "$FAKE_CURL_LOG" >/dev/null
+grep -F "https://trent.example/api/v1/metadata/namespaces/CodexDock/objects/Artifact/fields" "$FAKE_CURL_LOG" >/dev/null
+grep -F "https://trent.example/api/v1/metadata/namespaces/CodexDock/objects/RoadmapItem/fields" "$FAKE_CURL_LOG" >/dev/null
+grep -F "https://trent.example/api/v1/data/CodexDock/Project" "$FAKE_CURL_LOG" >/dev/null
+grep -F "https://trent.example/api/v1/data/CodexDock/RoadmapItem" "$FAKE_CURL_LOG" >/dev/null
+grep -F "Authorization: Bearer test-token" "$FAKE_CURL_LOG" >/dev/null
+jq -e '.values.Title == "Physical Mac-to-WSL E2E validation"' "$FAKE_CURL_BODY" >/dev/null
+jq -e '.values.Status == "pending"' "$FAKE_CURL_BODY" >/dev/null
+
 TRENT_REPORT="$WORK/trent-report"
 mkdir -p "$TRENT_REPORT"
 cat >"$TRENT_REPORT/result.txt" <<'EOF'

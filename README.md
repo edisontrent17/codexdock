@@ -323,6 +323,20 @@ SSH target, optional control URL, workspace, session, agent, prompt,
 SSH key-source flags, `require_scp`, and `target_arch`. Preflight reports also
 include a `preflight` field.
 
+Bootstrap a fresh TrentPlatform org with the CodexDock metadata used by the
+publish and closure helpers:
+
+```bash
+CODEXDOCK_TRENT_TOKEN_FILE=/tmp/trentplatform-codexdock-admin.json \
+  ./scripts/trent-bootstrap.sh
+```
+
+This creates the `CodexDock` namespace, `Project`, `Artifact`, and
+`RoadmapItem` objects, a CodexDock project record, and starter roadmap rows for
+the implementation scope. The script uses the TrentPlatform A2A-documented
+metadata and data endpoints, and requires a bearer token with
+`metadata:write` and `data:write` access.
+
 Publish a validation report to TrentPlatform after a preflight or remote run:
 
 ```bash
