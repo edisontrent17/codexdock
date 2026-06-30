@@ -262,7 +262,10 @@ create the workspace, and install managed internals before Mac-side `scp` is
 possible. `wsl-preflight.sh` checks WSL readiness without sudo and writes
 `wsl_preflight.txt`, so you can see whether `tailscale`, SSH, `tmux`, Codex,
 the workspace, and the local CodexDock binary are ready before and after
-preparation. Once SSH is reachable, use the Mac staging script to install the
+preparation. The preflight report also includes `next=` and prints the same
+next local action, so a failed WSL check points at `wsl-install-codexdock.sh`,
+`wsl-prepare.sh`, or the Codex CLI setup still needed before Mac-side
+validation. Once SSH is reachable, use the Mac staging script to install the
 current Linux CodexDock binary from the Mac, run the Mac preflight, execute the
 full remote validation, and intentionally finalize the successful report in
 TrentPlatform. It refuses to write runnable scripts until the required target

@@ -273,11 +273,16 @@ grep -F "wsl_preflight.txt" "$RUNBOOK_DIR/wsl-preflight.sh" >/dev/null
 grep -F "private_network_client=\$(command_status tailscale)" "$RUNBOOK_DIR/wsl-preflight.sh" >/dev/null
 grep -F "ssh_listener=\$(ssh_listener_status)" "$RUNBOOK_DIR/wsl-preflight.sh" >/dev/null
 grep -F "WORKSPACE='~/code'" "$RUNBOOK_DIR/wsl-preflight.sh" >/dev/null
+grep -F "INSTALL='$RUNBOOK_DIR/wsl-install-codexdock.sh'" "$RUNBOOK_DIR/wsl-preflight.sh" >/dev/null
+grep -F "PREPARE='$RUNBOOK_DIR/wsl-prepare.sh'" "$RUNBOOK_DIR/wsl-preflight.sh" >/dev/null
 grep -F 'printf "%s/%s" "$HOME" "${WORKSPACE#\~/}"' "$RUNBOOK_DIR/wsl-preflight.sh" >/dev/null
 grep -F '${WORKSPACE#\~/}' "$RUNBOOK_DIR/wsl-preflight.sh" >/dev/null
 grep -F 'workspace=$WORKSPACE' "$RUNBOOK_DIR/wsl-preflight.sh" >/dev/null
 grep -F "codexdock_bin=\$(codexdock_bin_status)" "$RUNBOOK_DIR/wsl-preflight.sh" >/dev/null
+grep -F 'next_action=$(next_action)' "$RUNBOOK_DIR/wsl-preflight.sh" >/dev/null
+grep -F 'next=$next_action' "$RUNBOOK_DIR/wsl-preflight.sh" >/dev/null
 grep -F 'printf "report: %s\n" "$REPORT"' "$RUNBOOK_DIR/wsl-preflight.sh" >/dev/null
+grep -F 'printf "next: %s\n" "$next_action"' "$RUNBOOK_DIR/wsl-preflight.sh" >/dev/null
 grep -F "./scripts/e2e-remote.sh --preflight" "$RUNBOOK_DIR/mac-preflight.sh" >/dev/null
 grep -F "./scripts/e2e-remote.sh" "$RUNBOOK_DIR/mac-run.sh" >/dev/null
 grep -F 'CODEXDOCK_BIN=${CODEXDOCK_BIN:-"$HOME/.local/bin/codexdock"}' "$RUNBOOK_DIR/wsl-prepare.sh" >/dev/null
@@ -293,6 +298,7 @@ grep -F "If SSH into WSL is not ready yet, install CodexDock from inside WSL fir
 grep -F "$RUNBOOK_DIR/wsl-install-codexdock.sh" "$RUNBOOK_DIR/runbook.txt" >/dev/null
 grep -F "Check WSL readiness without sudo:" "$RUNBOOK_DIR/runbook.txt" >/dev/null
 grep -F "$RUNBOOK_DIR/wsl-preflight.sh" "$RUNBOOK_DIR/runbook.txt" >/dev/null
+grep -F "The WSL preflight report records the next local action as next=." "$RUNBOOK_DIR/runbook.txt" >/dev/null
 grep -F "Install the latest CodexDock binary into WSL from the Mac" "$RUNBOOK_DIR/runbook.txt" >/dev/null
 grep -F "Source TrentPlatform bootstrap env" "$RUNBOOK_DIR/runbook.txt" >/dev/null
 

@@ -617,6 +617,10 @@ write_runbook() {
     printf 'REPORT=%s\n' "$(quote_sh "$REPORT_DIR/wsl_preflight.txt")"
     printf 'WORKSPACE=%s\n' "$(quote_sh "$WORKSPACE")"
     printf 'ADOPT=%s\n' "$(quote_sh "$ADOPT")"
+    printf 'INSTALL=%s\n' "$(quote_sh "$wsl_install")"
+    printf 'PREPARE=%s\n' "$(quote_sh "$wsl_prepare")"
+    printf 'MAC_STAGE=%s\n' "$(quote_sh "$mac_stage")"
+    printf 'MAC_PREFLIGHT=%s\n' "$(quote_sh "$mac_preflight")"
     printf 'command_status() {\n'
     printf '  if command -v "$1" >/dev/null 2>&1; then printf yes; else printf no; fi\n'
     printf '}\n'
@@ -657,9 +661,24 @@ write_runbook() {
     printf 'if [ "$codexdock_bin" = missing ]; then append_missing codexdock; fi\n'
     printf 'status=success\n'
     printf 'if [ "$missing" != none ]; then status=failure; fi\n'
+    printf 'next_action() {\n'
+    printf '  if [ "$status" = success ]; then\n'
+    printf '    printf "run %%s from the Mac, then %%s" "$MAC_STAGE" "$MAC_PREFLIGHT"\n'
+    printf '    return\n'
+    printf '  fi\n'
+    printf '  case " $missing " in\n'
+    printf '    *" codexdock "*) printf "run %%s, then rerun %%s" "$INSTALL" "$0"; return ;;\n'
+    printf '  esac\n'
+    printf '  case " $missing " in\n'
+    printf '    *" codex "*) printf "install and authenticate Codex CLI for this WSL user, run %%s if other dependencies remain, then rerun %%s" "$PREPARE" "$0"; return ;;\n'
+    printf '  esac\n'
+    printf '  printf "run %%s, then rerun %%s" "$PREPARE" "$0"\n'
+    printf '}\n'
+    printf 'next_action=$(next_action)\n'
     printf 'cat >"$REPORT" <<EOF\n'
     printf 'status=$status\n'
     printf 'missing=$missing\n'
+    printf 'next=$next_action\n'
     printf 'adopt=$ADOPT\n'
     printf 'private_network_client=$private_network_client\n'
     printf 'ssh_command=$ssh_command\n'
@@ -676,6 +695,7 @@ write_runbook() {
     printf '  printf "wsl preflight failed\\n"\n'
     printf 'fi\n'
     printf 'printf "report: %%s\\n" "$REPORT"\n'
+    printf 'printf "next: %%s\\n" "$next_action"\n'
     printf 'if [ "$status" = success ]; then exit 0; fi\n'
     printf 'exit 2\n'
   } >"$wsl_preflight"
@@ -730,6 +750,7 @@ write_runbook() {
     printf '  %s\n\n' "$wsl_install"
     printf 'Check WSL readiness without sudo:\n'
     printf '  %s\n\n' "$wsl_preflight"
+    printf 'The WSL preflight report records the next local action as next=.\n\n'
     printf 'Install the latest CodexDock binary into WSL from the Mac:\n'
     printf '  %s\n\n' "$mac_stage"
     printf 'Run inside WSL on the Codex host to prepare SSH, tmux, workspace, and managed internals:\n'
