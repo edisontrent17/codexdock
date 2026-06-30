@@ -407,6 +407,10 @@ else
   fi
 fi
 
+if [ "$(field cleanup_attempted)" = "yes" ]; then
+  required_steps="$required_steps cleanup_stop"
+fi
+
 for step in $required_steps; do
   for suffix in cmd out err; do
     file="$REPORT_DIR/$step.$suffix"
@@ -471,6 +475,10 @@ require_command_token stop stop
 require_command_token sessions_after_stop sessions
 require_command_words logs "--lines $(context_field log_lines)"
 require_command_words send "$(context_field prompt)"
+if [ -f "$REPORT_DIR/cleanup_stop.cmd" ]; then
+  require_command_token cleanup_stop stop
+  require_command_token cleanup_stop "$MACHINE"
+fi
 for targeted_step in init adopt prepare doctor start sessions send logs stop sessions_after_stop; do
   if [ -f "$REPORT_DIR/$targeted_step.cmd" ]; then
     require_command_token "$targeted_step" "$MACHINE"

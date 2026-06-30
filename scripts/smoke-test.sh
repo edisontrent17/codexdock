@@ -1266,6 +1266,24 @@ fi
 grep -F "remote E2E report result cleanup_exit_code must be not_applicable when cleanup_attempted=no: 0" "$WORK/trent-close-bad-result-cleanup-exit.out" >/dev/null
 test ! -s "$FAKE_CURL_LOG"
 
+MISSING_CLEANUP_ARTIFACTS_CLOSE_REPORT="$WORK/missing-cleanup-artifacts-close-report"
+cp -R "$TRENT_REPORT" "$MISSING_CLEANUP_ARTIFACTS_CLOSE_REPORT"
+sed -e 's/^cleanup_attempted=no$/cleanup_attempted=yes/' \
+  -e 's/^cleanup_exit_code=not_applicable$/cleanup_exit_code=0/' \
+  "$TRENT_REPORT/result.txt" >"$MISSING_CLEANUP_ARTIFACTS_CLOSE_REPORT/result.txt"
+: >"$FAKE_CURL_LOG"
+if CODEXDOCK_FAKE_CURL_LOG="$FAKE_CURL_LOG" \
+  CODEXDOCK_FAKE_CURL_BODY="$FAKE_CURL_BODY" \
+  CODEXDOCK_TRENT_TOKEN=test-token \
+  CODEXDOCK_TRENT_BASE_URL=https://trent.example \
+  PATH="$FAKE_BIN:$PATH" \
+  "$ROOT/scripts/trent-close-roadmap.sh" "$MISSING_CLEANUP_ARTIFACTS_CLOSE_REPORT" >"$WORK/trent-close-missing-cleanup-artifacts.out" 2>&1; then
+  echo "expected TrentPlatform roadmap closure to reject cleanup attempts without cleanup artifacts" >&2
+  exit 1
+fi
+grep -F "remote E2E report is missing required artifact: cleanup_stop.cmd" "$WORK/trent-close-missing-cleanup-artifacts.out" >/dev/null
+test ! -s "$FAKE_CURL_LOG"
+
 BAD_CONTEXT_MODE_CLOSE_REPORT="$WORK/bad-context-mode-close-report"
 cp -R "$TRENT_REPORT" "$BAD_CONTEXT_MODE_CLOSE_REPORT"
 sed 's/^adopt=0$/adopt=1/' "$TRENT_REPORT/context.txt" >"$BAD_CONTEXT_MODE_CLOSE_REPORT/context.txt"
