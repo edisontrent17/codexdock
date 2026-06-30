@@ -289,11 +289,15 @@ grep -F 'printf "next: %s\n" "$next_action"' "$RUNBOOK_DIR/wsl-preflight.sh" >/d
 grep -F "./scripts/e2e-remote.sh --preflight" "$RUNBOOK_DIR/mac-preflight.sh" >/dev/null
 grep -F "./scripts/e2e-remote.sh" "$RUNBOOK_DIR/mac-run.sh" >/dev/null
 grep -F 'CODEXDOCK_BIN=${CODEXDOCK_BIN:-"$HOME/.local/bin/codexdock"}' "$RUNBOOK_DIR/wsl-prepare.sh" >/dev/null
+grep -F "REPORT='$RUNBOOK_DIR/wsl_prepare_plan.txt'" "$RUNBOOK_DIR/wsl-prepare-plan.sh" >/dev/null
+grep -F 'printf "report: %s\n" "$REPORT"' "$RUNBOOK_DIR/wsl-prepare-plan.sh" >/dev/null
 grep -F '"$CODEXDOCK_BIN" doctor --repair-plan --target-os linux --role codex-host --workspace' "$RUNBOOK_DIR/wsl-prepare-plan.sh" >/dev/null
 if grep -F -- "--repair --yes" "$RUNBOOK_DIR/wsl-prepare-plan.sh" >/dev/null; then
   echo "wsl-prepare-plan.sh must not run privileged repair steps" >&2
   exit 1
 fi
+grep -F "REPORT='$RUNBOOK_DIR/wsl_prepare.txt'" "$RUNBOOK_DIR/wsl-prepare.sh" >/dev/null
+grep -F 'printf "report: %s\n" "$REPORT"' "$RUNBOOK_DIR/wsl-prepare.sh" >/dev/null
 grep -F '"$CODEXDOCK_BIN" doctor --repair --yes --target-os linux --role codex-host --workspace' "$RUNBOOK_DIR/wsl-prepare.sh" >/dev/null
 grep -F 'CODEXDOCK_TRENT_ENV_FILE=${CODEXDOCK_TRENT_ENV_FILE:-.dev-logs/trent-codexdock.env}' "$RUNBOOK_DIR/finalize-trent.sh" >/dev/null
 grep -F 'set -a' "$RUNBOOK_DIR/finalize-trent.sh" >/dev/null
@@ -309,6 +313,7 @@ grep -F "$RUNBOOK_DIR/wsl-preflight.sh" "$RUNBOOK_DIR/runbook.txt" >/dev/null
 grep -F "The WSL preflight report records the next local action as next=." "$RUNBOOK_DIR/runbook.txt" >/dev/null
 grep -F "Inspect WSL prepare commands without running privileged steps:" "$RUNBOOK_DIR/runbook.txt" >/dev/null
 grep -F "$RUNBOOK_DIR/wsl-prepare-plan.sh" "$RUNBOOK_DIR/runbook.txt" >/dev/null
+grep -F "WSL prepare scripts write wsl_prepare_plan.txt and wsl_prepare.txt." "$RUNBOOK_DIR/runbook.txt" >/dev/null
 grep -F "Install the latest CodexDock binary into WSL from the Mac" "$RUNBOOK_DIR/runbook.txt" >/dev/null
 grep -F "Source TrentPlatform bootstrap env" "$RUNBOOK_DIR/runbook.txt" >/dev/null
 

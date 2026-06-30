@@ -722,23 +722,41 @@ write_runbook() {
   {
     printf '#!/usr/bin/env sh\n'
     printf 'set -eu\n'
+    printf 'REPORT=%s\n' "$(quote_sh "$REPORT_DIR/wsl_prepare_plan.txt")"
     printf 'CODEXDOCK_BIN=${CODEXDOCK_BIN:-"$HOME/.local/bin/codexdock"}\n'
     printf 'if [ ! -x "$CODEXDOCK_BIN" ]; then\n'
     printf '  CODEXDOCK_BIN=codexdock\n'
     printf 'fi\n'
-    printf '"$CODEXDOCK_BIN" doctor --repair-plan --target-os linux --role codex-host --workspace %s%s\n' "$(quote_sh "$WORKSPACE")" "$ssh_key_arg"
+    printf 'mkdir -p "${REPORT%%/*}"\n'
+    printf 'set +e\n'
+    printf '"$CODEXDOCK_BIN" doctor --repair-plan --target-os linux --role codex-host --workspace %s%s >"$REPORT" 2>&1\n' "$(quote_sh "$WORKSPACE")" "$ssh_key_arg"
+    printf 'status=$?\n'
+    printf 'set -e\n'
+    printf 'cat "$REPORT"\n'
+    printf 'printf "report: %%s\\n" "$REPORT"\n'
+    printf 'exit "$status"\n'
   } >"$wsl_prepare_plan"
   chmod +x "$wsl_prepare_plan"
 
   {
     printf '#!/usr/bin/env sh\n'
     printf 'set -eu\n'
+    printf 'REPORT=%s\n' "$(quote_sh "$REPORT_DIR/wsl_prepare.txt")"
     printf 'CODEXDOCK_BIN=${CODEXDOCK_BIN:-"$HOME/.local/bin/codexdock"}\n'
     printf 'if [ ! -x "$CODEXDOCK_BIN" ]; then\n'
     printf '  CODEXDOCK_BIN=codexdock\n'
     printf 'fi\n'
-    printf '"$CODEXDOCK_BIN" doctor --repair-plan --target-os linux --role codex-host --workspace %s%s\n' "$(quote_sh "$WORKSPACE")" "$ssh_key_arg"
-    printf '"$CODEXDOCK_BIN" doctor --repair --yes --target-os linux --role codex-host --workspace %s%s\n' "$(quote_sh "$WORKSPACE")" "$ssh_key_arg"
+    printf 'mkdir -p "${REPORT%%/*}"\n'
+    printf 'set +e\n'
+    printf '{\n'
+    printf '  "$CODEXDOCK_BIN" doctor --repair-plan --target-os linux --role codex-host --workspace %s%s &&\n' "$(quote_sh "$WORKSPACE")" "$ssh_key_arg"
+    printf '  "$CODEXDOCK_BIN" doctor --repair --yes --target-os linux --role codex-host --workspace %s%s\n' "$(quote_sh "$WORKSPACE")" "$ssh_key_arg"
+    printf '} >"$REPORT" 2>&1\n'
+    printf 'status=$?\n'
+    printf 'set -e\n'
+    printf 'cat "$REPORT"\n'
+    printf 'printf "report: %%s\\n" "$REPORT"\n'
+    printf 'exit "$status"\n'
   } >"$wsl_prepare"
   chmod +x "$wsl_prepare"
 
@@ -766,6 +784,7 @@ write_runbook() {
     printf 'The WSL preflight report records the next local action as next=.\n\n'
     printf 'Inspect WSL prepare commands without running privileged steps:\n'
     printf '  %s\n\n' "$wsl_prepare_plan"
+    printf 'WSL prepare scripts write wsl_prepare_plan.txt and wsl_prepare.txt.\n\n'
     printf 'Install the latest CodexDock binary into WSL from the Mac:\n'
     printf '  %s\n\n' "$mac_stage"
     printf 'Run inside WSL on the Codex host to prepare SSH, tmux, workspace, and managed internals:\n'
