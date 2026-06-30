@@ -349,6 +349,10 @@ created with writable field types used by the current TrentPlatform
 record-storage path, with explicit text lengths for report content and scope
 summaries. Set `CODEXDOCK_TRENT_ENV_FILE` when you want those assignments
 written to a sourceable file for later report publishing and roadmap closure.
+The Trent record, close, and finalizer helpers source
+`.dev-logs/trent-codexdock.env` by default when it exists, and auto-export the
+assignments so values written by the bootstrap helper are visible to child
+scripts. Set `CODEXDOCK_TRENT_ENV_FILE` to use a different sourceable env file.
 
 Publish a validation report to TrentPlatform after a preflight or remote run:
 

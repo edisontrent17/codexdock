@@ -10,6 +10,8 @@ Usage: CODEXDOCK_TRENT_TOKEN=<token> $0 <successful-e2e-report-dir>
 Environment:
   CODEXDOCK_TRENT_TOKEN        TrentPlatform bearer token
   CODEXDOCK_TRENT_TOKEN_FILE   JSON file containing personalAccessToken or accessToken
+  CODEXDOCK_TRENT_ENV_FILE     Sourceable env file with TrentPlatform roadmap ids
+                                (default: $ROOT/.dev-logs/trent-codexdock.env)
   CODEXDOCK_TRENT_BASE_URL     TrentPlatform base URL (default: https://trentplatform.trentsoftware.in)
   CODEXDOCK_TRENT_NAMESPACE    Metadata namespace (default: CodexDock)
   CODEXDOCK_TRENT_ROADMAP_IDS  Roadmap item ids to close
@@ -28,12 +30,24 @@ if [ "$#" -ne 1 ]; then
 fi
 
 REPORT_DIR=$1
+
+load_trent_env_file() {
+  env_file=${CODEXDOCK_TRENT_ENV_FILE:-"$ROOT/.dev-logs/trent-codexdock.env"}
+  if [ -f "$env_file" ]; then
+    set -a
+    . "$env_file"
+    set +a
+  fi
+}
+
 "$ROOT/scripts/validate-e2e-report.sh" --full "$REPORT_DIR" >/dev/null
 
 if ! command -v curl >/dev/null 2>&1; then
   echo "curl is required to update TrentPlatform roadmap items" >&2
   exit 2
 fi
+
+load_trent_env_file
 
 TOKEN=${CODEXDOCK_TRENT_TOKEN:-}
 if [ -z "$TOKEN" ] && [ -n "${CODEXDOCK_TRENT_TOKEN_FILE:-}" ]; then

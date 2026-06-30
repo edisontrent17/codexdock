@@ -1,6 +1,8 @@
 #!/usr/bin/env sh
 set -eu
 
+ROOT=$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)
+
 usage() {
   cat <<EOF
 Usage: CODEXDOCK_TRENT_TOKEN=<token> CODEXDOCK_TRENT_PROJECT=<project-id> $0 <report-dir>
@@ -8,6 +10,8 @@ Usage: CODEXDOCK_TRENT_TOKEN=<token> CODEXDOCK_TRENT_PROJECT=<project-id> $0 <re
 Environment:
   CODEXDOCK_TRENT_TOKEN       TrentPlatform bearer token
   CODEXDOCK_TRENT_TOKEN_FILE  JSON file containing personalAccessToken or accessToken
+  CODEXDOCK_TRENT_ENV_FILE    Sourceable env file with TrentPlatform project ids
+                               (default: $ROOT/.dev-logs/trent-codexdock.env)
   CODEXDOCK_TRENT_PROJECT     TrentPlatform CodexDock.Project record id
   CODEXDOCK_TRENT_BASE_URL    TrentPlatform base URL (default: https://trentplatform.trentsoftware.in)
   CODEXDOCK_TRENT_NAMESPACE   Metadata namespace (default: CodexDock)
@@ -31,6 +35,15 @@ RESULT_FILE="$REPORT_DIR/result.txt"
 CONTEXT_FILE="$REPORT_DIR/context.txt"
 PREFLIGHT_FILE="$REPORT_DIR/preflight.txt"
 
+load_trent_env_file() {
+  env_file=${CODEXDOCK_TRENT_ENV_FILE:-"$ROOT/.dev-logs/trent-codexdock.env"}
+  if [ -f "$env_file" ]; then
+    set -a
+    . "$env_file"
+    set +a
+  fi
+}
+
 if [ ! -d "$REPORT_DIR" ]; then
   echo "report directory not found: $REPORT_DIR" >&2
   exit 2
@@ -50,6 +63,8 @@ if ! command -v curl >/dev/null 2>&1; then
   echo "curl is required to publish the TrentPlatform artifact" >&2
   exit 2
 fi
+
+load_trent_env_file
 
 TOKEN=${CODEXDOCK_TRENT_TOKEN:-}
 if [ -z "$TOKEN" ] && [ -n "${CODEXDOCK_TRENT_TOKEN_FILE:-}" ]; then

@@ -627,7 +627,9 @@ write_runbook() {
     printf 'cd %s\n' "$(quote_sh "$ROOT")"
     printf 'CODEXDOCK_TRENT_ENV_FILE=${CODEXDOCK_TRENT_ENV_FILE:-.dev-logs/trent-codexdock.env}\n'
     printf 'if [ -f "$CODEXDOCK_TRENT_ENV_FILE" ]; then\n'
+    printf '  set -a\n'
     printf '  . "$CODEXDOCK_TRENT_ENV_FILE"\n'
+    printf '  set +a\n'
     printf 'fi\n'
     printf './scripts/trent-finalize-e2e.sh %s\n' "$(quote_sh "$REPORT_DIR")"
   } >"$finalize"

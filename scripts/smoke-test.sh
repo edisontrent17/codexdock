@@ -265,7 +265,9 @@ grep -F "./scripts/e2e-remote.sh" "$RUNBOOK_DIR/mac-run.sh" >/dev/null
 grep -F 'CODEXDOCK_BIN=${CODEXDOCK_BIN:-"$HOME/.local/bin/codexdock"}' "$RUNBOOK_DIR/wsl-prepare.sh" >/dev/null
 grep -F '"$CODEXDOCK_BIN" doctor --repair --yes --target-os linux --role codex-host --workspace' "$RUNBOOK_DIR/wsl-prepare.sh" >/dev/null
 grep -F 'CODEXDOCK_TRENT_ENV_FILE=${CODEXDOCK_TRENT_ENV_FILE:-.dev-logs/trent-codexdock.env}' "$RUNBOOK_DIR/finalize-trent.sh" >/dev/null
+grep -F 'set -a' "$RUNBOOK_DIR/finalize-trent.sh" >/dev/null
 grep -F '. "$CODEXDOCK_TRENT_ENV_FILE"' "$RUNBOOK_DIR/finalize-trent.sh" >/dev/null
+grep -F 'set +a' "$RUNBOOK_DIR/finalize-trent.sh" >/dev/null
 grep -F "./scripts/trent-finalize-e2e.sh '$RUNBOOK_DIR'" "$RUNBOOK_DIR/finalize-trent.sh" >/dev/null
 grep -F "Run on the Mac" "$RUNBOOK_DIR/runbook.txt" >/dev/null
 grep -F "Run inside WSL" "$RUNBOOK_DIR/runbook.txt" >/dev/null
@@ -814,6 +816,12 @@ jq -e 'select(.name == "Content" and .fieldType == "text" and .textLength == 655
 jq -e 'select(.name == "Scope" and .fieldType == "text" and .textLength == 4096)' "$FAKE_CURL_PAYLOADS" >/dev/null
 grep -F "CODEXDOCK_TRENT_PROJECT=111764" "$TRENT_BOOTSTRAP_ENV" >/dev/null
 grep -F "CODEXDOCK_TRENT_ROADMAP_IDS='111765 111766 111767 111768 111769 111770 111771 111772 111773'" "$TRENT_BOOTSTRAP_ENV" >/dev/null
+"$ROOT/scripts/trent-record-e2e.sh" --help >"$WORK/trent-record-help.out"
+grep -F "CODEXDOCK_TRENT_ENV_FILE" "$WORK/trent-record-help.out" >/dev/null
+"$ROOT/scripts/trent-close-roadmap.sh" --help >"$WORK/trent-close-help.out"
+grep -F "CODEXDOCK_TRENT_ENV_FILE" "$WORK/trent-close-help.out" >/dev/null
+"$ROOT/scripts/trent-finalize-e2e.sh" --help >"$WORK/trent-finalize-help.out"
+grep -F "CODEXDOCK_TRENT_ENV_FILE" "$WORK/trent-finalize-help.out" >/dev/null
 
 TRENT_REPORT="$WORK/trent-report"
 mkdir -p "$TRENT_REPORT"
@@ -975,6 +983,22 @@ jq -e '.values.Content | contains("init.cmd: env HOME=/tmp/codexdock-home /tmp/c
 jq -e '.values.Content | contains("doctor.out: bytes=")' "$FAKE_CURL_BODY" >/dev/null
 jq -e '.values.Content | contains("stop.err: bytes=")' "$FAKE_CURL_BODY" >/dev/null
 
+TRENT_DIRECT_ENV="$WORK/trent-direct.env"
+cat >"$TRENT_DIRECT_ENV" <<'EOF'
+CODEXDOCK_TRENT_PROJECT=111764
+CODEXDOCK_TRENT_ROADMAP_IDS='222001 222002'
+EOF
+: >"$FAKE_CURL_LOG"
+CODEXDOCK_FAKE_CURL_LOG="$FAKE_CURL_LOG" \
+  CODEXDOCK_FAKE_CURL_BODY="$FAKE_CURL_BODY" \
+  CODEXDOCK_TRENT_TOKEN=test-token \
+  CODEXDOCK_TRENT_BASE_URL=https://trent.example \
+  CODEXDOCK_TRENT_ENV_FILE="$TRENT_DIRECT_ENV" \
+  PATH="$FAKE_BIN:$PATH" \
+  "$ROOT/scripts/trent-record-e2e.sh" "$TRENT_REPORT" >"$WORK/trent-record-env-file.out"
+grep -F '"id":12345' "$WORK/trent-record-env-file.out" >/dev/null
+jq -e '.values.Project == "111764"' "$FAKE_CURL_BODY" >/dev/null
+
 TRENT_KEY_REPORT="$WORK/trent-report-key"
 cp -R "$TRENT_REPORT" "$TRENT_KEY_REPORT"
 sed 's/^ssh_authorized_key_set=no$/ssh_authorized_key_set=yes/' "$TRENT_REPORT/context.txt" >"$TRENT_KEY_REPORT/context.txt"
@@ -1033,6 +1057,19 @@ grep -F "Authorization: Bearer test-token" "$FAKE_CURL_LOG" >/dev/null
 CODEXDOCK_FAKE_CURL_LOG="$FAKE_CURL_LOG" \
   CODEXDOCK_FAKE_CURL_BODY="$FAKE_CURL_BODY" \
   CODEXDOCK_TRENT_TOKEN=test-token \
+  CODEXDOCK_TRENT_BASE_URL=https://trent.example \
+  CODEXDOCK_TRENT_ENV_FILE="$TRENT_DIRECT_ENV" \
+  PATH="$FAKE_BIN:$PATH" \
+  "$ROOT/scripts/trent-close-roadmap.sh" "$TRENT_REPORT" >"$WORK/trent-close-env-file.out"
+grep -F "closed roadmap item 222001" "$WORK/trent-close-env-file.out" >/dev/null
+grep -F "closed roadmap item 222002" "$WORK/trent-close-env-file.out" >/dev/null
+grep -F "https://trent.example/api/v1/data/CodexDock/RoadmapItem/222001" "$FAKE_CURL_LOG" >/dev/null
+grep -F "https://trent.example/api/v1/data/CodexDock/RoadmapItem/222002" "$FAKE_CURL_LOG" >/dev/null
+
+: >"$FAKE_CURL_LOG"
+CODEXDOCK_FAKE_CURL_LOG="$FAKE_CURL_LOG" \
+  CODEXDOCK_FAKE_CURL_BODY="$FAKE_CURL_BODY" \
+  CODEXDOCK_TRENT_TOKEN=test-token \
   CODEXDOCK_TRENT_PROJECT=111764 \
   CODEXDOCK_TRENT_BASE_URL=https://trent.example \
   PATH="$FAKE_BIN:$PATH" \
@@ -1049,6 +1086,22 @@ grep -F "https://trent.example/api/v1/data/CodexDock/RoadmapItem/111768" "$FAKE_
 grep -F "https://trent.example/api/v1/data/CodexDock/RoadmapItem/111769" "$FAKE_CURL_LOG" >/dev/null
 grep -F "https://trent.example/api/v1/data/CodexDock/RoadmapItem/111770" "$FAKE_CURL_LOG" >/dev/null
 grep -F "https://trent.example/api/v1/data/CodexDock/RoadmapItem/111771" "$FAKE_CURL_LOG" >/dev/null
+
+: >"$FAKE_CURL_LOG"
+CODEXDOCK_FAKE_CURL_LOG="$FAKE_CURL_LOG" \
+  CODEXDOCK_FAKE_CURL_BODY="$FAKE_CURL_BODY" \
+  CODEXDOCK_TRENT_TOKEN=test-token \
+  CODEXDOCK_TRENT_BASE_URL=https://trent.example \
+  CODEXDOCK_TRENT_ENV_FILE="$TRENT_DIRECT_ENV" \
+  PATH="$FAKE_BIN:$PATH" \
+  "$ROOT/scripts/trent-finalize-e2e.sh" "$TRENT_REPORT" >"$WORK/trent-finalize-env-file.out"
+grep -F "validated remote E2E report" "$WORK/trent-finalize-env-file.out" >/dev/null
+grep -F '"id":12345' "$WORK/trent-finalize-env-file.out" >/dev/null
+grep -F "closed roadmap item 222001" "$WORK/trent-finalize-env-file.out" >/dev/null
+grep -F "closed roadmap item 222002" "$WORK/trent-finalize-env-file.out" >/dev/null
+grep -F "https://trent.example/api/v1/data/CodexDock/Artifact" "$FAKE_CURL_LOG" >/dev/null
+grep -F "https://trent.example/api/v1/data/CodexDock/RoadmapItem/222001" "$FAKE_CURL_LOG" >/dev/null
+grep -F "https://trent.example/api/v1/data/CodexDock/RoadmapItem/222002" "$FAKE_CURL_LOG" >/dev/null
 
 BAD_CONTEXT_CLOSE_REPORT="$WORK/bad-context-close-report"
 cp -R "$TRENT_REPORT" "$BAD_CONTEXT_CLOSE_REPORT"

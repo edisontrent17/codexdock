@@ -10,6 +10,8 @@ Usage: CODEXDOCK_TRENT_TOKEN=<token> CODEXDOCK_TRENT_PROJECT=<project-id> $0 <su
 Environment:
   CODEXDOCK_TRENT_TOKEN        TrentPlatform bearer token
   CODEXDOCK_TRENT_TOKEN_FILE   JSON file containing personalAccessToken or accessToken
+  CODEXDOCK_TRENT_ENV_FILE     Sourceable env file with TrentPlatform project and roadmap ids
+                                (default: $ROOT/.dev-logs/trent-codexdock.env)
   CODEXDOCK_TRENT_PROJECT      TrentPlatform CodexDock.Project record id
   CODEXDOCK_TRENT_BASE_URL     TrentPlatform base URL (default: https://trentplatform.trentsoftware.in)
   CODEXDOCK_TRENT_NAMESPACE    Metadata namespace (default: CodexDock)
@@ -29,6 +31,17 @@ if [ "$#" -ne 1 ]; then
 fi
 
 REPORT_DIR=$1
+
+load_trent_env_file() {
+  env_file=${CODEXDOCK_TRENT_ENV_FILE:-"$ROOT/.dev-logs/trent-codexdock.env"}
+  if [ -f "$env_file" ]; then
+    set -a
+    . "$env_file"
+    set +a
+  fi
+}
+
+load_trent_env_file
 
 "$ROOT/scripts/validate-e2e-report.sh" --full "$REPORT_DIR" >/dev/null
 printf 'validated remote E2E report\n'
