@@ -580,6 +580,7 @@ write_runbook() {
   wsl_prepare="$REPORT_DIR/wsl-prepare.sh"
   wsl_install="$REPORT_DIR/wsl-install-codexdock.sh"
   wsl_preflight="$REPORT_DIR/wsl-preflight.sh"
+  wsl_prepare_plan="$REPORT_DIR/wsl-prepare-plan.sh"
   mac_stage="$REPORT_DIR/mac-stage-wsl-codexdock.sh"
   mac_preflight="$REPORT_DIR/mac-preflight.sh"
   mac_run="$REPORT_DIR/mac-run.sh"
@@ -618,6 +619,7 @@ write_runbook() {
     printf 'WORKSPACE=%s\n' "$(quote_sh "$WORKSPACE")"
     printf 'ADOPT=%s\n' "$(quote_sh "$ADOPT")"
     printf 'INSTALL=%s\n' "$(quote_sh "$wsl_install")"
+    printf 'PREPARE_PLAN=%s\n' "$(quote_sh "$wsl_prepare_plan")"
     printf 'PREPARE=%s\n' "$(quote_sh "$wsl_prepare")"
     printf 'MAC_STAGE=%s\n' "$(quote_sh "$mac_stage")"
     printf 'MAC_PREFLIGHT=%s\n' "$(quote_sh "$mac_preflight")"
@@ -670,9 +672,9 @@ write_runbook() {
     printf '    *" codexdock "*) printf "run %%s, then rerun %%s" "$INSTALL" "$0"; return ;;\n'
     printf '  esac\n'
     printf '  case " $missing " in\n'
-    printf '    *" codex "*) printf "install and authenticate Codex CLI for this WSL user, run %%s if other dependencies remain, then rerun %%s" "$PREPARE" "$0"; return ;;\n'
+    printf '    *" codex "*) printf "install and authenticate Codex CLI for this WSL user, run %%s to inspect remaining steps, run %%s if needed, then rerun %%s" "$PREPARE_PLAN" "$PREPARE" "$0"; return ;;\n'
     printf '  esac\n'
-    printf '  printf "run %%s, then rerun %%s" "$PREPARE" "$0"\n'
+    printf '  printf "run %%s to inspect, run %%s, then rerun %%s" "$PREPARE_PLAN" "$PREPARE" "$0"\n'
     printf '}\n'
     printf 'next_action=$(next_action)\n'
     printf 'cat >"$REPORT" <<EOF\n'
@@ -725,6 +727,17 @@ write_runbook() {
     printf '  CODEXDOCK_BIN=codexdock\n'
     printf 'fi\n'
     printf '"$CODEXDOCK_BIN" doctor --repair-plan --target-os linux --role codex-host --workspace %s%s\n' "$(quote_sh "$WORKSPACE")" "$ssh_key_arg"
+  } >"$wsl_prepare_plan"
+  chmod +x "$wsl_prepare_plan"
+
+  {
+    printf '#!/usr/bin/env sh\n'
+    printf 'set -eu\n'
+    printf 'CODEXDOCK_BIN=${CODEXDOCK_BIN:-"$HOME/.local/bin/codexdock"}\n'
+    printf 'if [ ! -x "$CODEXDOCK_BIN" ]; then\n'
+    printf '  CODEXDOCK_BIN=codexdock\n'
+    printf 'fi\n'
+    printf '"$CODEXDOCK_BIN" doctor --repair-plan --target-os linux --role codex-host --workspace %s%s\n' "$(quote_sh "$WORKSPACE")" "$ssh_key_arg"
     printf '"$CODEXDOCK_BIN" doctor --repair --yes --target-os linux --role codex-host --workspace %s%s\n' "$(quote_sh "$WORKSPACE")" "$ssh_key_arg"
   } >"$wsl_prepare"
   chmod +x "$wsl_prepare"
@@ -751,6 +764,8 @@ write_runbook() {
     printf 'Check WSL readiness without sudo:\n'
     printf '  %s\n\n' "$wsl_preflight"
     printf 'The WSL preflight report records the next local action as next=.\n\n'
+    printf 'Inspect WSL prepare commands without running privileged steps:\n'
+    printf '  %s\n\n' "$wsl_prepare_plan"
     printf 'Install the latest CodexDock binary into WSL from the Mac:\n'
     printf '  %s\n\n' "$mac_stage"
     printf 'Run inside WSL on the Codex host to prepare SSH, tmux, workspace, and managed internals:\n'

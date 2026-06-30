@@ -254,8 +254,9 @@ CODEXDOCK_REPORT_DIR=.dev-logs/e2e-remote/physical-run \
 
 The runbook mode does not run SSH or contact TrentPlatform. It writes
 `wsl-install-codexdock.sh`, `mac-stage-wsl-codexdock.sh`,
-`mac-preflight.sh`, `mac-run.sh`, `wsl-prepare.sh`, `finalize-trent.sh`, and
-`runbook.txt` into the report directory. Use the WSL-local install script first
+`mac-preflight.sh`, `mac-run.sh`, `wsl-preflight.sh`,
+`wsl-prepare-plan.sh`, `wsl-prepare.sh`, `finalize-trent.sh`, and `runbook.txt`
+into the report directory. Use the WSL-local install script first
 when SSH into WSL is not ready yet; it builds CodexDock inside WSL into
 `$HOME/.local/bin/codexdock` so `wsl-prepare.sh` can start SSH, install tmux,
 create the workspace, and install managed internals before Mac-side `scp` is
@@ -264,11 +265,14 @@ possible. `wsl-preflight.sh` checks WSL readiness without sudo and writes
 the workspace, and the local CodexDock binary are ready before and after
 preparation. The preflight report also includes `next=` and prints the same
 next local action, so a failed WSL check points at `wsl-install-codexdock.sh`,
-`wsl-prepare.sh`, or the Codex CLI setup still needed before Mac-side
-validation. Once SSH is reachable, use the Mac staging script to install the
-current Linux CodexDock binary from the Mac, run the Mac preflight, execute the
-full remote validation, and intentionally finalize the successful report in
-TrentPlatform. It refuses to write runnable scripts until the required target
+the safe `wsl-prepare-plan.sh` inspection script, `wsl-prepare.sh`, or the
+Codex CLI setup still needed before Mac-side validation. `wsl-prepare-plan.sh`
+prints the exact CodexDock-managed repair commands without running them;
+`wsl-prepare.sh` runs the same repair with `--yes` and may install packages or
+start services. Once SSH is reachable, use the Mac staging script to install
+the current Linux CodexDock binary from the Mac, run the Mac preflight, execute
+the full remote validation, and intentionally finalize the successful report
+in TrentPlatform. It refuses to write runnable scripts until the required target
 values are present:
 `CODEXDOCK_HOST` and `CODEXDOCK_USER` for direct mode, or `CODEXDOCK_USER` for
 `CODEXDOCK_ADOPT=1`; `CODEXDOCK_SSH_PORT` and `CODEXDOCK_LOG_LINES` must be
