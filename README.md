@@ -360,12 +360,16 @@ CODEXDOCK_TRENT_TOKEN_FILE=/tmp/trentplatform-codexdock-admin.json \
 
 Bootstrap creates the `CodexDock` namespace, `Project`, `Artifact`, and
 `RoadmapItem` objects, a CodexDock project record, and starter roadmap rows for
-the implementation scope. The script uses the TrentPlatform A2A-documented
-metadata and data endpoints, and requires a bearer token with
+the implementation scope. It also seeds a `GitHub repository` artifact pointing
+to `https://github.com/edisontrent17/codexdock`; set
+`CODEXDOCK_TRENT_REPOSITORY_URL` before bootstrap if you need a different
+repository URL. The script uses the TrentPlatform A2A-documented metadata and
+data endpoints, and requires a bearer token with
 `metadata:write` and `data:write` access. It prints reusable
-`CODEXDOCK_TRENT_PROJECT` and `CODEXDOCK_TRENT_ROADMAP_IDS` assignments from
-the created TrentPlatform records; export those values before recording or
-finalizing E2E reports. Bootstrap fields that later receive records are
+`CODEXDOCK_TRENT_PROJECT`, `CODEXDOCK_TRENT_REPOSITORY_ARTIFACT`, and
+`CODEXDOCK_TRENT_ROADMAP_IDS` assignments from the created TrentPlatform
+records; export those values before recording or finalizing E2E reports.
+Bootstrap fields that later receive records are
 created with writable field types used by the current TrentPlatform
 record-storage path, with explicit text lengths for report content and scope
 summaries. Set `CODEXDOCK_TRENT_ENV_FILE` when you want those assignments

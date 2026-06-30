@@ -11,6 +11,9 @@ Environment:
   CODEXDOCK_TRENT_BASE_URL     TrentPlatform base URL (default: https://trentplatform.trentsoftware.in)
   CODEXDOCK_TRENT_NAMESPACE    Metadata namespace (default: CodexDock)
   CODEXDOCK_TRENT_PROJECT_NAME Project record title (default: CodexDock)
+  CODEXDOCK_TRENT_REPOSITORY_URL
+                                Git repository URL to seed as an Artifact
+                                (default: https://github.com/edisontrent17/codexdock)
   CODEXDOCK_TRENT_ENV_FILE     Optional file to write reusable env assignments
 EOF
 }
@@ -52,6 +55,7 @@ fi
 BASE_URL=${CODEXDOCK_TRENT_BASE_URL:-https://trentplatform.trentsoftware.in}
 NAMESPACE=${CODEXDOCK_TRENT_NAMESPACE:-CodexDock}
 PROJECT_NAME=${CODEXDOCK_TRENT_PROJECT_NAME:-CodexDock}
+REPOSITORY_URL=${CODEXDOCK_TRENT_REPOSITORY_URL:-https://github.com/edisontrent17/codexdock}
 ENV_FILE=${CODEXDOCK_TRENT_ENV_FILE:-}
 
 post_json() {
@@ -135,6 +139,34 @@ create_field() {
     post_json "/api/v1/metadata/namespaces/$NAMESPACE/objects/$object/fields" >/dev/null
 }
 
+create_picklist_field() {
+  object=$1
+  name=$2
+  label=$3
+  required=$4
+  default_text_value=$5
+  picklist_values=$6
+  if [ "$required" = "true" ]; then
+    required_json=true
+  else
+    required_json=false
+  fi
+  jq -n \
+    --arg name "$name" \
+    --arg label "$label" \
+    --arg defaultTextValue "$default_text_value" \
+    --argjson required "$required_json" \
+    --argjson picklistValues "$picklist_values" \
+    '{
+      name:$name,
+      label:$label,
+      fieldType:"picklist",
+      required:$required,
+      picklistValues:$picklistValues
+    } + (if $defaultTextValue == "" then {} else {defaultTextValue:$defaultTextValue} end)' |
+    post_json "/api/v1/metadata/namespaces/$NAMESPACE/objects/$object/fields" >/dev/null
+}
+
 create_project_record() {
   response=$(jq -n \
     --arg title "$PROJECT_NAME" \
@@ -166,6 +198,25 @@ create_roadmap_id() {
   response_id "roadmap record $title" "$response"
 }
 
+create_repository_artifact() {
+  project=$1
+  response=$(jq -n \
+    --arg repositoryUrl "$REPOSITORY_URL" \
+    --arg project "$project" \
+    '{
+      name:"GitHub repository",
+      values:{
+        Title:"GitHub repository",
+        ArtifactType:"repository",
+        Status:"active",
+        Project:$project,
+        Content:("Git repository URL: " + $repositoryUrl)
+      }
+    }' |
+    post_json "/api/v1/data/$NAMESPACE/Artifact")
+  response_id "repository artifact" "$response"
+}
+
 append_id() {
   existing=$1
   id=$2
@@ -178,26 +229,46 @@ append_id() {
 
 create_namespace
 
+PROJECT_STATUS_VALUES='[
+  {"value":"active","label":"Active","sortOrder":10,"defaultValue":true,"active":true},
+  {"value":"done","label":"Done","sortOrder":20,"defaultValue":false,"active":true}
+]'
+ARTIFACT_TYPE_VALUES='[
+  {"value":"plan","label":"Plan","sortOrder":10,"defaultValue":true,"active":true},
+  {"value":"repository","label":"Repository","sortOrder":20,"defaultValue":false,"active":true},
+  {"value":"e2e-report","label":"E2E Report","sortOrder":30,"defaultValue":false,"active":true}
+]'
+ARTIFACT_STATUS_VALUES='[
+  {"value":"active","label":"Active","sortOrder":10,"defaultValue":true,"active":true},
+  {"value":"done","label":"Done","sortOrder":20,"defaultValue":false,"active":true}
+]'
+ROADMAP_STATUS_VALUES='[
+  {"value":"pending","label":"Pending","sortOrder":10,"defaultValue":false,"active":true},
+  {"value":"active","label":"Active","sortOrder":20,"defaultValue":true,"active":true},
+  {"value":"done","label":"Done","sortOrder":30,"defaultValue":false,"active":true}
+]'
+
 create_object Project Project Projects "CodexDock project scope."
 create_field Project Title Title text true
-create_field Project Status Status picklist true
+create_picklist_field Project Status Status true active "$PROJECT_STATUS_VALUES"
 create_field Project Scope Scope text false "" 4096
 
 create_object Artifact Artifact Artifacts "CodexDock project evidence and implementation artifacts."
 create_field Artifact Title Title text true
-create_field Artifact ArtifactType "Artifact Type" picklist true
-create_field Artifact Status Status picklist true
+create_picklist_field Artifact ArtifactType "Artifact Type" true plan "$ARTIFACT_TYPE_VALUES"
+create_picklist_field Artifact Status Status true active "$ARTIFACT_STATUS_VALUES"
 create_field Artifact Project Project reference false "$NAMESPACE.Project"
 create_field Artifact Content Content text false "" 65535
 
 create_object RoadmapItem "Roadmap Item" "Roadmap Items" "CodexDock implementation roadmap item."
 create_field RoadmapItem Title Title text true
-create_field RoadmapItem Status Status picklist true
+create_picklist_field RoadmapItem Status Status true active "$ROADMAP_STATUS_VALUES"
 create_field RoadmapItem Project Project reference false "$NAMESPACE.Project"
 create_field RoadmapItem Scope Scope text false "" 4096
 create_field RoadmapItem SortOrder "Sort Order" number false
 
 PROJECT_ID=$(create_project_record)
+REPOSITORY_ARTIFACT_ID=$(create_repository_artifact "$PROJECT_ID")
 ROADMAP_IDS=
 ROADMAP_IDS=$(append_id "$ROADMAP_IDS" "$(create_roadmap_id "Product model and command UX" done 1 "$PROJECT_ID")")
 ROADMAP_IDS=$(append_id "$ROADMAP_IDS" "$(create_roadmap_id "TrentPlatform project system of record" active 2 "$PROJECT_ID")")
@@ -211,12 +282,14 @@ ROADMAP_IDS=$(append_id "$ROADMAP_IDS" "$(create_roadmap_id "Physical Mac-to-WSL
 
 printf 'bootstrapped TrentPlatform CodexDock metadata\n'
 printf 'CODEXDOCK_TRENT_PROJECT=%s\n' "$PROJECT_ID"
+printf 'CODEXDOCK_TRENT_REPOSITORY_ARTIFACT=%s\n' "$REPOSITORY_ARTIFACT_ID"
 printf "CODEXDOCK_TRENT_ROADMAP_IDS='%s'\n" "$ROADMAP_IDS"
 
 if [ -n "$ENV_FILE" ]; then
   mkdir -p "$(dirname -- "$ENV_FILE")"
   {
     printf 'CODEXDOCK_TRENT_PROJECT=%s\n' "$PROJECT_ID"
+    printf 'CODEXDOCK_TRENT_REPOSITORY_ARTIFACT=%s\n' "$REPOSITORY_ARTIFACT_ID"
     printf "CODEXDOCK_TRENT_ROADMAP_IDS='%s'\n" "$ROADMAP_IDS"
   } >"$ENV_FILE"
   printf 'wrote TrentPlatform env file: %s\n' "$ENV_FILE"
