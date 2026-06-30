@@ -327,8 +327,29 @@ SSH target, optional control URL, workspace, session, agent, prompt,
 SSH key-source flags, `require_scp`, and `target_arch`. Preflight reports also
 include a `preflight` field.
 
-Bootstrap a fresh TrentPlatform org with the CodexDock metadata used by the
+Provision a fresh TrentPlatform org through the A2A signup flow, create a
+scoped CodexDock agent PAT, and bootstrap the CodexDock metadata used by the
 publish and closure helpers:
+
+```bash
+CODEXDOCK_TRENT_ORG_NAME=CodexDock123 \
+  CODEXDOCK_TRENT_ORG_LABEL=CodexDock \
+  CODEXDOCK_TRENT_ADMIN_EMAIL=admin@example.com \
+  CODEXDOCK_TRENT_ADMIN_PASSWORD='<strong-password>' \
+  CODEXDOCK_TRENT_TOKEN_FILE=/tmp/trentplatform-codexdock-admin.json \
+  CODEXDOCK_TRENT_ENV_FILE=.dev-logs/trent-codexdock.env \
+  ./scripts/trent-provision-org.sh
+. .dev-logs/trent-codexdock.env
+```
+
+The provision helper calls the public TrentPlatform signup endpoint, creates a
+scoped PAT with metadata, data, and query scopes, writes the token JSON file
+with mode `600`, and then runs `trent-bootstrap.sh` using that token. Use a
+unique org name that starts with a letter and contains only letters and
+numbers.
+
+If you already have a scoped TrentPlatform PAT, skip org provisioning and
+bootstrap the CodexDock metadata directly:
 
 ```bash
 CODEXDOCK_TRENT_TOKEN_FILE=/tmp/trentplatform-codexdock-admin.json \
@@ -337,7 +358,7 @@ CODEXDOCK_TRENT_TOKEN_FILE=/tmp/trentplatform-codexdock-admin.json \
 . .dev-logs/trent-codexdock.env
 ```
 
-This creates the `CodexDock` namespace, `Project`, `Artifact`, and
+Bootstrap creates the `CodexDock` namespace, `Project`, `Artifact`, and
 `RoadmapItem` objects, a CodexDock project record, and starter roadmap rows for
 the implementation scope. The script uses the TrentPlatform A2A-documented
 metadata and data endpoints, and requires a bearer token with

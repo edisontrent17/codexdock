@@ -8,3 +8,4 @@
 6. SSH connect workflow with alias resolution, pre-SSH reachability errors, and target readiness checks.
 7. Codex tmux workflow with current-network start, attach, send, logs, sessions, doctor, and confirmed stop.
 8. Hardening and packaging with repeatable build scripts, release archives, and smoke checks.
+9. Physical Mac-to-WSL E2E validation with TrentPlatform artifact publishing and roadmap closure.

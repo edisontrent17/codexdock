@@ -757,6 +757,12 @@ if [ -s "$BODY" ]; then
   title=$(jq -r '.values.Title // .name // empty' "$BODY" 2>/dev/null || printf '')
 fi
 case "$url" in
+  */auth/signup)
+    jq -n -c '{accessToken:"tenant-token"}'
+    ;;
+  */auth/personal-access-tokens)
+    jq -n -c '{accessToken:"cdock-pat-token"}'
+    ;;
   */data/CodexDock/Project)
     jq -n -c --arg name "${title:-CodexDock}" '{id:111764,name:$name}'
     ;;
@@ -822,6 +828,41 @@ grep -F "CODEXDOCK_TRENT_ENV_FILE" "$WORK/trent-record-help.out" >/dev/null
 grep -F "CODEXDOCK_TRENT_ENV_FILE" "$WORK/trent-close-help.out" >/dev/null
 "$ROOT/scripts/trent-finalize-e2e.sh" --help >"$WORK/trent-finalize-help.out"
 grep -F "CODEXDOCK_TRENT_ENV_FILE" "$WORK/trent-finalize-help.out" >/dev/null
+"$ROOT/scripts/trent-provision-org.sh" --help >"$WORK/trent-provision-help.out"
+grep -F "CODEXDOCK_TRENT_ORG_NAME" "$WORK/trent-provision-help.out" >/dev/null
+grep -F "CODEXDOCK_TRENT_ADMIN_PASSWORD" "$WORK/trent-provision-help.out" >/dev/null
+
+TRENT_PROVISION_TOKEN_FILE="$WORK/trent-provision-token.json"
+TRENT_PROVISION_ENV="$WORK/trent-provision.env"
+: >"$FAKE_CURL_LOG"
+: >"$FAKE_CURL_PAYLOADS"
+CODEXDOCK_FAKE_CURL_LOG="$FAKE_CURL_LOG" \
+  CODEXDOCK_FAKE_CURL_BODY="$FAKE_CURL_BODY" \
+  CODEXDOCK_FAKE_CURL_PAYLOADS="$FAKE_CURL_PAYLOADS" \
+  CODEXDOCK_TRENT_BASE_URL=https://trent.example \
+  CODEXDOCK_TRENT_ORG_NAME=CodexDockSmoke \
+  CODEXDOCK_TRENT_ORG_LABEL="CodexDock Smoke" \
+  CODEXDOCK_TRENT_ADMIN_EMAIL=admin@codexdock.example \
+  CODEXDOCK_TRENT_ADMIN_PASSWORD=ChangeMe12345 \
+  CODEXDOCK_TRENT_ADMIN_DISPLAY_NAME="CodexDock Admin" \
+  CODEXDOCK_TRENT_TOKEN_FILE="$TRENT_PROVISION_TOKEN_FILE" \
+  CODEXDOCK_TRENT_ENV_FILE="$TRENT_PROVISION_ENV" \
+  PATH="$FAKE_BIN:$PATH" \
+  "$ROOT/scripts/trent-provision-org.sh" >"$WORK/trent-provision.out"
+grep -F "provisioned TrentPlatform org CodexDockSmoke" "$WORK/trent-provision.out" >/dev/null
+grep -F "wrote TrentPlatform token file: $TRENT_PROVISION_TOKEN_FILE" "$WORK/trent-provision.out" >/dev/null
+grep -F "wrote TrentPlatform env file: $TRENT_PROVISION_ENV" "$WORK/trent-provision.out" >/dev/null
+grep -F "https://trent.example/api/v1/auth/signup" "$FAKE_CURL_LOG" >/dev/null
+grep -F "https://trent.example/api/v1/auth/personal-access-tokens" "$FAKE_CURL_LOG" >/dev/null
+grep -F "Authorization: Bearer tenant-token" "$FAKE_CURL_LOG" >/dev/null
+grep -F "Authorization: Bearer cdock-pat-token" "$FAKE_CURL_LOG" >/dev/null
+jq -e '.personalAccessToken == "cdock-pat-token"' "$TRENT_PROVISION_TOKEN_FILE" >/dev/null
+jq -e '.orgName == "CodexDockSmoke"' "$TRENT_PROVISION_TOKEN_FILE" >/dev/null
+jq -e '.adminEmail == "admin@codexdock.example"' "$TRENT_PROVISION_TOKEN_FILE" >/dev/null
+jq -e '.scopes == ["metadata:read","metadata:write","data:read","data:write","query:execute"]' "$TRENT_PROVISION_TOKEN_FILE" >/dev/null
+grep -F "CODEXDOCK_TRENT_PROJECT=111764" "$TRENT_PROVISION_ENV" >/dev/null
+jq -e 'select(.orgName == "CodexDockSmoke" and .adminEmail == "admin@codexdock.example")' "$FAKE_CURL_PAYLOADS" >/dev/null
+jq -e 'select(.name == "CodexDock Agent" and (.scopes | join(",") == "metadata:read,metadata:write,data:read,data:write,query:execute"))' "$FAKE_CURL_PAYLOADS" >/dev/null
 
 TRENT_REPORT="$WORK/trent-report"
 mkdir -p "$TRENT_REPORT"
