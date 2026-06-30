@@ -338,7 +338,9 @@ metadata and data endpoints, and requires a bearer token with
 `metadata:write` and `data:write` access. It prints reusable
 `CODEXDOCK_TRENT_PROJECT` and `CODEXDOCK_TRENT_ROADMAP_IDS` assignments from
 the created TrentPlatform records; export those values before recording or
-finalizing E2E reports.
+finalizing E2E reports. Bootstrap fields that later receive records are
+created with writable field types used by the current TrentPlatform
+record-storage path.
 
 Publish a validation report to TrentPlatform after a preflight or remote run:
 

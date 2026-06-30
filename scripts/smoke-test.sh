@@ -719,6 +719,7 @@ grep -F "preflight=failed" "$PREFLIGHT_REPORT/result.txt" >/dev/null
 FAKE_BIN="$WORK/bin"
 FAKE_CURL_LOG="$WORK/fake-curl.log"
 FAKE_CURL_BODY="$WORK/fake-curl-body.json"
+FAKE_CURL_PAYLOADS="$WORK/fake-curl-payloads.jsonl"
 mkdir -p "$FAKE_BIN"
 cat >"$FAKE_BIN/curl" <<'EOF'
 #!/usr/bin/env sh
@@ -739,6 +740,9 @@ while [ "$#" -gt 0 ]; do
     if [ "${1:-}" = "@-" ]; then
       cat >"$BODY"
       cp "$BODY" "$CODEXDOCK_FAKE_CURL_BODY"
+      if [ -n "${CODEXDOCK_FAKE_CURL_PAYLOADS:-}" ]; then
+        jq -c . "$BODY" >>"$CODEXDOCK_FAKE_CURL_PAYLOADS"
+      fi
     fi
   fi
   shift
@@ -777,8 +781,10 @@ EOF
 chmod +x "$FAKE_BIN/curl"
 
 : >"$FAKE_CURL_LOG"
+: >"$FAKE_CURL_PAYLOADS"
 CODEXDOCK_FAKE_CURL_LOG="$FAKE_CURL_LOG" \
   CODEXDOCK_FAKE_CURL_BODY="$FAKE_CURL_BODY" \
+  CODEXDOCK_FAKE_CURL_PAYLOADS="$FAKE_CURL_PAYLOADS" \
   CODEXDOCK_TRENT_TOKEN=test-token \
   CODEXDOCK_TRENT_BASE_URL=https://trent.example \
   PATH="$FAKE_BIN:$PATH" \
@@ -797,6 +803,8 @@ jq -e '.values.Status == "pending"' "$FAKE_CURL_BODY" >/dev/null
 jq -e '.values.Project == "111764"' "$FAKE_CURL_BODY" >/dev/null
 grep -F "CODEXDOCK_TRENT_PROJECT=111764" "$WORK/trent-bootstrap.out" >/dev/null
 grep -F "CODEXDOCK_TRENT_ROADMAP_IDS='111765 111766 111767 111768 111769 111770 111771 111772 111773'" "$WORK/trent-bootstrap.out" >/dev/null
+jq -e 'select(.name == "Content" and .fieldType == "text")' "$FAKE_CURL_PAYLOADS" >/dev/null
+jq -e 'select(.name == "Scope" and .fieldType == "text")' "$FAKE_CURL_PAYLOADS" >/dev/null
 
 TRENT_REPORT="$WORK/trent-report"
 mkdir -p "$TRENT_REPORT"

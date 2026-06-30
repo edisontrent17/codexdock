@@ -172,20 +172,20 @@ create_namespace
 create_object Project Project Projects "CodexDock project scope."
 create_field Project Title Title text true
 create_field Project Status Status picklist true
-create_field Project Scope Scope long_text false
+create_field Project Scope Scope text false
 
 create_object Artifact Artifact Artifacts "CodexDock project evidence and implementation artifacts."
 create_field Artifact Title Title text true
 create_field Artifact ArtifactType "Artifact Type" picklist true
 create_field Artifact Status Status picklist true
 create_field Artifact Project Project reference false "$NAMESPACE.Project"
-create_field Artifact Content Content long_text false
+create_field Artifact Content Content text false
 
 create_object RoadmapItem "Roadmap Item" "Roadmap Items" "CodexDock implementation roadmap item."
 create_field RoadmapItem Title Title text true
 create_field RoadmapItem Status Status picklist true
 create_field RoadmapItem Project Project reference false "$NAMESPACE.Project"
-create_field RoadmapItem Scope Scope long_text false
+create_field RoadmapItem Scope Scope text false
 create_field RoadmapItem SortOrder "Sort Order" number false
 
 PROJECT_ID=$(create_project_record)
