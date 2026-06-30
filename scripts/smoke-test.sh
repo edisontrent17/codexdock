@@ -782,11 +782,13 @@ chmod +x "$FAKE_BIN/curl"
 
 : >"$FAKE_CURL_LOG"
 : >"$FAKE_CURL_PAYLOADS"
+TRENT_BOOTSTRAP_ENV="$WORK/trent-bootstrap.env"
 CODEXDOCK_FAKE_CURL_LOG="$FAKE_CURL_LOG" \
   CODEXDOCK_FAKE_CURL_BODY="$FAKE_CURL_BODY" \
   CODEXDOCK_FAKE_CURL_PAYLOADS="$FAKE_CURL_PAYLOADS" \
   CODEXDOCK_TRENT_TOKEN=test-token \
   CODEXDOCK_TRENT_BASE_URL=https://trent.example \
+  CODEXDOCK_TRENT_ENV_FILE="$TRENT_BOOTSTRAP_ENV" \
   PATH="$FAKE_BIN:$PATH" \
   "$ROOT/scripts/trent-bootstrap.sh" >"$WORK/trent-bootstrap.out"
 grep -F "bootstrapped TrentPlatform CodexDock metadata" "$WORK/trent-bootstrap.out" >/dev/null
@@ -807,6 +809,8 @@ jq -e 'select(.name == "Content" and .fieldType == "text")' "$FAKE_CURL_PAYLOADS
 jq -e 'select(.name == "Scope" and .fieldType == "text")' "$FAKE_CURL_PAYLOADS" >/dev/null
 jq -e 'select(.name == "Content" and .fieldType == "text" and .textLength == 65535)' "$FAKE_CURL_PAYLOADS" >/dev/null
 jq -e 'select(.name == "Scope" and .fieldType == "text" and .textLength == 4096)' "$FAKE_CURL_PAYLOADS" >/dev/null
+grep -F "CODEXDOCK_TRENT_PROJECT=111764" "$TRENT_BOOTSTRAP_ENV" >/dev/null
+grep -F "CODEXDOCK_TRENT_ROADMAP_IDS='111765 111766 111767 111768 111769 111770 111771 111772 111773'" "$TRENT_BOOTSTRAP_ENV" >/dev/null
 
 TRENT_REPORT="$WORK/trent-report"
 mkdir -p "$TRENT_REPORT"

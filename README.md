@@ -328,7 +328,9 @@ publish and closure helpers:
 
 ```bash
 CODEXDOCK_TRENT_TOKEN_FILE=/tmp/trentplatform-codexdock-admin.json \
+  CODEXDOCK_TRENT_ENV_FILE=.dev-logs/trent-codexdock.env \
   ./scripts/trent-bootstrap.sh
+. .dev-logs/trent-codexdock.env
 ```
 
 This creates the `CodexDock` namespace, `Project`, `Artifact`, and
@@ -341,7 +343,8 @@ the created TrentPlatform records; export those values before recording or
 finalizing E2E reports. Bootstrap fields that later receive records are
 created with writable field types used by the current TrentPlatform
 record-storage path, with explicit text lengths for report content and scope
-summaries.
+summaries. Set `CODEXDOCK_TRENT_ENV_FILE` when you want those assignments
+written to a sourceable file for later report publishing and roadmap closure.
 
 Publish a validation report to TrentPlatform after a preflight or remote run:
 

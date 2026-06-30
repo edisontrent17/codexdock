@@ -11,6 +11,7 @@ Environment:
   CODEXDOCK_TRENT_BASE_URL     TrentPlatform base URL (default: https://trentplatform.trentsoftware.in)
   CODEXDOCK_TRENT_NAMESPACE    Metadata namespace (default: CodexDock)
   CODEXDOCK_TRENT_PROJECT_NAME Project record title (default: CodexDock)
+  CODEXDOCK_TRENT_ENV_FILE     Optional file to write reusable env assignments
 EOF
 }
 
@@ -51,6 +52,7 @@ fi
 BASE_URL=${CODEXDOCK_TRENT_BASE_URL:-https://trentplatform.trentsoftware.in}
 NAMESPACE=${CODEXDOCK_TRENT_NAMESPACE:-CodexDock}
 PROJECT_NAME=${CODEXDOCK_TRENT_PROJECT_NAME:-CodexDock}
+ENV_FILE=${CODEXDOCK_TRENT_ENV_FILE:-}
 
 post_json() {
   path=$1
@@ -210,3 +212,12 @@ ROADMAP_IDS=$(append_id "$ROADMAP_IDS" "$(create_roadmap_id "Physical Mac-to-WSL
 printf 'bootstrapped TrentPlatform CodexDock metadata\n'
 printf 'CODEXDOCK_TRENT_PROJECT=%s\n' "$PROJECT_ID"
 printf "CODEXDOCK_TRENT_ROADMAP_IDS='%s'\n" "$ROADMAP_IDS"
+
+if [ -n "$ENV_FILE" ]; then
+  mkdir -p "$(dirname -- "$ENV_FILE")"
+  {
+    printf 'CODEXDOCK_TRENT_PROJECT=%s\n' "$PROJECT_ID"
+    printf "CODEXDOCK_TRENT_ROADMAP_IDS='%s'\n" "$ROADMAP_IDS"
+  } >"$ENV_FILE"
+  printf 'wrote TrentPlatform env file: %s\n' "$ENV_FILE"
+fi
