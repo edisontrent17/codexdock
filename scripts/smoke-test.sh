@@ -794,6 +794,7 @@ grep -F "https://trent.example/api/v1/data/CodexDock/RoadmapItem" "$FAKE_CURL_LO
 grep -F "Authorization: Bearer test-token" "$FAKE_CURL_LOG" >/dev/null
 jq -e '.values.Title == "Physical Mac-to-WSL E2E validation"' "$FAKE_CURL_BODY" >/dev/null
 jq -e '.values.Status == "pending"' "$FAKE_CURL_BODY" >/dev/null
+jq -e '.values.Project == "111764"' "$FAKE_CURL_BODY" >/dev/null
 grep -F "CODEXDOCK_TRENT_PROJECT=111764" "$WORK/trent-bootstrap.out" >/dev/null
 grep -F "CODEXDOCK_TRENT_ROADMAP_IDS='111765 111766 111767 111768 111769 111770 111771 111772 111773'" "$WORK/trent-bootstrap.out" >/dev/null
 

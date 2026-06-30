@@ -138,11 +138,13 @@ create_roadmap_record() {
   title=$1
   status=$2
   sort_order=$3
+  project=$4
   jq -n \
     --arg title "$title" \
     --arg status "$status" \
     --arg sortOrder "$sort_order" \
-    '{name:$title,values:{Title:$title,Status:$status,SortOrder:$sortOrder}}' |
+    --arg project "$project" \
+    '{name:$title,values:{Title:$title,Status:$status,SortOrder:$sortOrder,Project:$project}}' |
     post_json "/api/v1/data/$NAMESPACE/RoadmapItem"
 }
 
@@ -150,7 +152,8 @@ create_roadmap_id() {
   title=$1
   status=$2
   sort_order=$3
-  response=$(create_roadmap_record "$title" "$status" "$sort_order")
+  project=$4
+  response=$(create_roadmap_record "$title" "$status" "$sort_order" "$project")
   response_id "roadmap record $title" "$response"
 }
 
@@ -187,15 +190,15 @@ create_field RoadmapItem SortOrder "Sort Order" number false
 
 PROJECT_ID=$(create_project_record)
 ROADMAP_IDS=
-ROADMAP_IDS=$(append_id "$ROADMAP_IDS" "$(create_roadmap_id "Product model and command UX" done 1)")
-ROADMAP_IDS=$(append_id "$ROADMAP_IDS" "$(create_roadmap_id "TrentPlatform project system of record" active 2)")
-ROADMAP_IDS=$(append_id "$ROADMAP_IDS" "$(create_roadmap_id "CLI skeleton, local config, and first-time init" done 3)")
-ROADMAP_IDS=$(append_id "$ROADMAP_IDS" "$(create_roadmap_id "Managed OSS component integration" active 4)")
-ROADMAP_IDS=$(append_id "$ROADMAP_IDS" "$(create_roadmap_id "Machine registration and discovery" active 5)")
-ROADMAP_IDS=$(append_id "$ROADMAP_IDS" "$(create_roadmap_id "SSH connect workflow" active 6)")
-ROADMAP_IDS=$(append_id "$ROADMAP_IDS" "$(create_roadmap_id "Codex tmux workflow" active 7)")
-ROADMAP_IDS=$(append_id "$ROADMAP_IDS" "$(create_roadmap_id "Hardening, packaging, and smoke checks" active 8)")
-ROADMAP_IDS=$(append_id "$ROADMAP_IDS" "$(create_roadmap_id "Physical Mac-to-WSL E2E validation" pending 9)")
+ROADMAP_IDS=$(append_id "$ROADMAP_IDS" "$(create_roadmap_id "Product model and command UX" done 1 "$PROJECT_ID")")
+ROADMAP_IDS=$(append_id "$ROADMAP_IDS" "$(create_roadmap_id "TrentPlatform project system of record" active 2 "$PROJECT_ID")")
+ROADMAP_IDS=$(append_id "$ROADMAP_IDS" "$(create_roadmap_id "CLI skeleton, local config, and first-time init" done 3 "$PROJECT_ID")")
+ROADMAP_IDS=$(append_id "$ROADMAP_IDS" "$(create_roadmap_id "Managed OSS component integration" active 4 "$PROJECT_ID")")
+ROADMAP_IDS=$(append_id "$ROADMAP_IDS" "$(create_roadmap_id "Machine registration and discovery" active 5 "$PROJECT_ID")")
+ROADMAP_IDS=$(append_id "$ROADMAP_IDS" "$(create_roadmap_id "SSH connect workflow" active 6 "$PROJECT_ID")")
+ROADMAP_IDS=$(append_id "$ROADMAP_IDS" "$(create_roadmap_id "Codex tmux workflow" active 7 "$PROJECT_ID")")
+ROADMAP_IDS=$(append_id "$ROADMAP_IDS" "$(create_roadmap_id "Hardening, packaging, and smoke checks" active 8 "$PROJECT_ID")")
+ROADMAP_IDS=$(append_id "$ROADMAP_IDS" "$(create_roadmap_id "Physical Mac-to-WSL E2E validation" pending 9 "$PROJECT_ID")")
 
 printf 'bootstrapped TrentPlatform CodexDock metadata\n'
 printf 'CODEXDOCK_TRENT_PROJECT=%s\n' "$PROJECT_ID"
