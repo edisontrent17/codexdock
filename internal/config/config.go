@@ -137,6 +137,13 @@ func (c *Config) UpsertMachine(networkName string, machine Machine) error {
 	if _, exists := network.Machines[machine.Name]; exists {
 		return fmt.Errorf("machine %s already exists in network %s", machine.Name, networkName)
 	}
+	machine = applyMachineDefaults(machine)
+	network.Machines[machine.Name] = machine
+	c.Networks[networkName] = network
+	return nil
+}
+
+func applyMachineDefaults(machine Machine) Machine {
 	if machine.Host == "" {
 		machine.Host = machine.Name
 	}
@@ -152,9 +159,7 @@ func (c *Config) UpsertMachine(networkName string, machine Machine) error {
 	if machine.Workspace == "" {
 		machine.Workspace = "~/code"
 	}
-	network.Machines[machine.Name] = machine
-	c.Networks[networkName] = network
-	return nil
+	return machine
 }
 
 func (c *Config) SetNetworkControlURL(networkName, controlURL string) error {
@@ -176,11 +181,5 @@ func (c Config) ResolveMachine(networkName, machineName string) (Machine, error)
 	if !ok {
 		return Machine{}, fmt.Errorf("machine %s not found in network %s", machineName, networkName)
 	}
-	if machine.Host == "" {
-		machine.Host = machine.Name
-	}
-	if machine.SSHPort == 0 {
-		machine.SSHPort = 22
-	}
-	return machine, nil
+	return applyMachineDefaults(machine), nil
 }

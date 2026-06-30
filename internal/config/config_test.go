@@ -75,3 +75,22 @@ func TestResolveMachineReportsMissingNetworkAndMachine(t *testing.T) {
 	_, err = cfg.ResolveMachine("personal", "homepc")
 	require.ErrorContains(t, err, "machine homepc not found")
 }
+
+func TestResolveMachineAppliesRuntimeDefaultsForSparseProfiles(t *testing.T) {
+	cfg := config.New()
+	cfg.UpsertNetwork(config.Network{
+		Name: "personal",
+		Machines: map[string]config.Machine{
+			"homepc": {Name: "homepc"},
+		},
+	})
+
+	got, err := cfg.ResolveMachine("personal", "homepc")
+
+	require.NoError(t, err)
+	require.Equal(t, "homepc", got.Host)
+	require.Equal(t, 22, got.SSHPort)
+	require.Equal(t, "codex", got.SessionName)
+	require.Equal(t, "codex", got.AgentCommand)
+	require.Equal(t, "~/code", got.Workspace)
+}
