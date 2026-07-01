@@ -273,6 +273,9 @@ grep -F "./scripts/build.sh" "$RUNBOOK_DIR/wsl-install-codexdock.sh" >/dev/null
 grep -F '"$HOME/.local/bin/codexdock" version' "$RUNBOOK_DIR/wsl-install-codexdock.sh" >/dev/null
 grep -F "wsl_preflight.txt" "$RUNBOOK_DIR/wsl-preflight.sh" >/dev/null
 grep -F "private_network_client=\$(command_status tailscale)" "$RUNBOOK_DIR/wsl-preflight.sh" >/dev/null
+grep -F "private_network_status=\$(private_network_status)" "$RUNBOOK_DIR/wsl-preflight.sh" >/dev/null
+grep -F "private_network_ip=\$(private_network_ip)" "$RUNBOOK_DIR/wsl-preflight.sh" >/dev/null
+grep -F "append_missing tailscale_connection" "$RUNBOOK_DIR/wsl-preflight.sh" >/dev/null
 grep -F "ssh_listener=\$(ssh_listener_status)" "$RUNBOOK_DIR/wsl-preflight.sh" >/dev/null
 grep -F "WORKSPACE='~/code'" "$RUNBOOK_DIR/wsl-preflight.sh" >/dev/null
 grep -F "INSTALL='$RUNBOOK_DIR/wsl-install-codexdock.sh'" "$RUNBOOK_DIR/wsl-preflight.sh" >/dev/null
@@ -285,6 +288,8 @@ grep -F 'workspace=$WORKSPACE' "$RUNBOOK_DIR/wsl-preflight.sh" >/dev/null
 grep -F "codexdock_bin=\$(codexdock_bin_status)" "$RUNBOOK_DIR/wsl-preflight.sh" >/dev/null
 grep -F 'next_action=$(next_action)' "$RUNBOOK_DIR/wsl-preflight.sh" >/dev/null
 grep -F 'next=$next_action' "$RUNBOOK_DIR/wsl-preflight.sh" >/dev/null
+grep -F 'private_network_status=$private_network_status' "$RUNBOOK_DIR/wsl-preflight.sh" >/dev/null
+grep -F 'private_network_ip=$private_network_ip' "$RUNBOOK_DIR/wsl-preflight.sh" >/dev/null
 grep -F 'printf "report: %s\n" "$REPORT"' "$RUNBOOK_DIR/wsl-preflight.sh" >/dev/null
 grep -F 'printf "next: %s\n" "$next_action"' "$RUNBOOK_DIR/wsl-preflight.sh" >/dev/null
 grep -F "./scripts/e2e-remote.sh --preflight" "$RUNBOOK_DIR/mac-preflight.sh" >/dev/null
