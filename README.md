@@ -263,11 +263,15 @@ create the workspace, and install managed internals before Mac-side `scp` is
 possible. `wsl-preflight.sh` checks WSL readiness without sudo and writes
 `wsl_preflight.txt`, so you can see whether `tailscale` is installed and has a
 Tailscale IPv4 address, SSH is listening, `tmux`, Codex, the workspace, and the
-local CodexDock binary are ready before and after preparation. The preflight
-report also includes `next=` and prints the same next local action, so a failed
-WSL check points at `wsl-install-codexdock.sh`, Tailscale authentication, the
-safe `wsl-prepare-plan.sh` inspection script, `wsl-prepare.sh`, or the Codex
-CLI setup still needed before Mac-side validation. `wsl-prepare-plan.sh`
+local CodexDock binary are ready before and after preparation. It also records
+non-mutating privilege hints such as `prepare_privilege`,
+`no_new_privileges`, and `sudo_config_owner_uid`, so a sandboxed Codex session
+does not misleadingly point at a privileged prepare step that can only work
+from a normal WSL terminal with working sudo. The preflight report also
+includes `next=` and prints the same next local action, so a failed WSL check
+points at `wsl-install-codexdock.sh`, Tailscale authentication, the safe
+`wsl-prepare-plan.sh` inspection script, `wsl-prepare.sh`, or the Codex CLI
+setup still needed before Mac-side validation. `wsl-prepare-plan.sh`
 prints the exact CodexDock-managed repair commands without running them;
 `wsl-prepare.sh` runs the same repair with `--yes` and may install packages or
 start services. They write `wsl_prepare_plan.txt` and `wsl_prepare.txt` in the

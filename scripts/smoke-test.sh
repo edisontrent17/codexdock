@@ -275,6 +275,9 @@ grep -F "wsl_preflight.txt" "$RUNBOOK_DIR/wsl-preflight.sh" >/dev/null
 grep -F "private_network_client=\$(command_status tailscale)" "$RUNBOOK_DIR/wsl-preflight.sh" >/dev/null
 grep -F "private_network_status=\$(private_network_status)" "$RUNBOOK_DIR/wsl-preflight.sh" >/dev/null
 grep -F "private_network_ip=\$(private_network_ip)" "$RUNBOOK_DIR/wsl-preflight.sh" >/dev/null
+grep -F "prepare_privilege=\$(prepare_privilege_status)" "$RUNBOOK_DIR/wsl-preflight.sh" >/dev/null
+grep -F "no_new_privileges=\$(no_new_privileges_status)" "$RUNBOOK_DIR/wsl-preflight.sh" >/dev/null
+grep -F "sudo_config_owner_uid=\$(sudo_config_owner_uid)" "$RUNBOOK_DIR/wsl-preflight.sh" >/dev/null
 grep -F "append_missing tailscale_connection" "$RUNBOOK_DIR/wsl-preflight.sh" >/dev/null
 grep -F "ssh_listener=\$(ssh_listener_status)" "$RUNBOOK_DIR/wsl-preflight.sh" >/dev/null
 grep -F "WORKSPACE='~/code'" "$RUNBOOK_DIR/wsl-preflight.sh" >/dev/null
@@ -290,6 +293,10 @@ grep -F 'next_action=$(next_action)' "$RUNBOOK_DIR/wsl-preflight.sh" >/dev/null
 grep -F 'next=$next_action' "$RUNBOOK_DIR/wsl-preflight.sh" >/dev/null
 grep -F 'private_network_status=$private_network_status' "$RUNBOOK_DIR/wsl-preflight.sh" >/dev/null
 grep -F 'private_network_ip=$private_network_ip' "$RUNBOOK_DIR/wsl-preflight.sh" >/dev/null
+grep -F 'prepare_privilege=$prepare_privilege' "$RUNBOOK_DIR/wsl-preflight.sh" >/dev/null
+grep -F 'no_new_privileges=$no_new_privileges' "$RUNBOOK_DIR/wsl-preflight.sh" >/dev/null
+grep -F 'sudo_config_owner_uid=$sudo_config_owner_uid' "$RUNBOOK_DIR/wsl-preflight.sh" >/dev/null
+grep -F 'run %s from a normal WSL terminal with working sudo' "$RUNBOOK_DIR/wsl-preflight.sh" >/dev/null
 grep -F 'printf "report: %s\n" "$REPORT"' "$RUNBOOK_DIR/wsl-preflight.sh" >/dev/null
 grep -F 'printf "next: %s\n" "$next_action"' "$RUNBOOK_DIR/wsl-preflight.sh" >/dev/null
 grep -F "./scripts/e2e-remote.sh --preflight" "$RUNBOOK_DIR/mac-preflight.sh" >/dev/null
